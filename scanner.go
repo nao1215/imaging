@@ -219,6 +219,7 @@ func (s *scanner) scanYCbCr(img *image.YCbCr, x1, y1, x2, y2 int, dst []uint8) {
 			yBase = (y - img.Rect.Min.Y) * img.CStride
 		case image.YCbCrSubsampleRatio420, image.YCbCrSubsampleRatio440:
 			yBase = (y/2 - hy) * img.CStride
+		default:
 		}
 
 		for x := x1; x < x2; x++ {
