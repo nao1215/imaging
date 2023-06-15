@@ -9,7 +9,6 @@ import (
 	"image/draw"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,12 +25,12 @@ type badFS struct{}
 
 func (badFS) Create(name string) (io.WriteCloser, error) {
 	if name == "badFile.jpg" {
-		return badFile{ioutil.Discard}, nil
+		return badFile{io.Discard}, nil
 	}
 	return nil, errCreate
 }
 
-func (badFS) Open(name string) (io.ReadCloser, error) {
+func (badFS) Open(_ string) (io.ReadCloser, error) {
 	return nil, errOpen
 }
 
@@ -93,11 +92,11 @@ func TestOpenSave(t *testing.T) {
 		},
 	}
 
-	dir, err := ioutil.TempDir("", "imaging")
+	dir, err := os.MkdirTemp("", "imaging")
 	if err != nil {
 		t.Fatalf("failed to create temporary directory: %v", err)
 	}
-	defer os.RemoveAll(dir)
+	defer os.RemoveAll(dir) //nolint
 
 	for _, ext := range []string{"jpg", "jpeg", "png", "gif", "bmp", "tif", "tiff"} {
 		filename := filepath.Join(dir, "test."+ext)

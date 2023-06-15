@@ -99,7 +99,7 @@ func AdjustHue(img image.Image, shift float64) *image.NRGBA {
 		h, s, l := rgbToHSL(c.R, c.G, c.B)
 		h += summand
 		h = math.Mod(h, 1)
-		//Adding 1 because Golang's Modulo function behaves differently to similar operators in most other languages.
+		// Adding 1 because Golang's Modulo function behaves differently to similar operators in most other languages.
 		if h < 0 {
 			h++
 		}
