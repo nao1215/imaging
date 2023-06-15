@@ -8,6 +8,8 @@ import (
 )
 
 func TestResize(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -199,6 +201,8 @@ func TestResize(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Resize(tc.src, tc.w, tc.h, tc.f)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -209,6 +213,8 @@ func TestResize(t *testing.T) {
 }
 
 func TestResampleFilters(t *testing.T) {
+	t.Parallel()
+
 	for _, filter := range []ResampleFilter{
 		NearestNeighbor,
 		Box,
@@ -243,6 +249,8 @@ func TestResampleFilters(t *testing.T) {
 }
 
 func TestResizeGolden(t *testing.T) {
+	t.Parallel()
+
 	for name, filter := range map[string]ResampleFilter{
 		"out_resize_nearest.png": NearestNeighbor,
 		"out_resize_linear.png":  Linear,
@@ -261,6 +269,8 @@ func TestResizeGolden(t *testing.T) {
 }
 
 func TestFit(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -366,6 +376,8 @@ func TestFit(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Fit(tc.src, tc.w, tc.h, tc.f)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -376,6 +388,8 @@ func TestFit(t *testing.T) {
 }
 
 func TestFitGolden(t *testing.T) {
+	t.Parallel()
+
 	got := Fit(testdataBranchesPNG, 150, 150, Box)
 	name := filepath.Join("testdata", "out_fit.png")
 	want, err := Open(name)
@@ -388,6 +402,8 @@ func TestFitGolden(t *testing.T) {
 }
 
 func TestFill(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -465,6 +481,8 @@ func TestFill(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Fill(tc.src, tc.w, tc.h, tc.a, tc.f)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -475,6 +493,8 @@ func TestFill(t *testing.T) {
 }
 
 func TestFillGolden(t *testing.T) {
+	t.Parallel()
+
 	anchorPoints := map[string]Anchor{
 		"left":   Left,
 		"center": Center,
@@ -494,6 +514,7 @@ func TestFillGolden(t *testing.T) {
 }
 
 func TestResizeAndCrop(t *testing.T) {
+	t.Parallel()
 
 	pix := []uint8{
 		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
@@ -612,6 +633,8 @@ func TestResizeAndCrop(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := resizeAndCrop(tc.src, tc.w, tc.h, tc.a, tc.f)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -622,6 +645,7 @@ func TestResizeAndCrop(t *testing.T) {
 }
 
 func TestCropAndResize(t *testing.T) {
+	t.Parallel()
 
 	pix := []uint8{
 		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
@@ -740,6 +764,8 @@ func TestCropAndResize(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := cropAndResize(tc.src, tc.w, tc.h, tc.a, tc.f)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -750,6 +776,8 @@ func TestCropAndResize(t *testing.T) {
 }
 
 func TestThumbnail(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -821,6 +849,8 @@ func TestThumbnail(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Thumbnail(tc.src, tc.w, tc.h, tc.f)
 			if !compareNRGBA(got, tc.want, 0) {

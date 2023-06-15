@@ -10,6 +10,8 @@ import (
 )
 
 func TestScanner(t *testing.T) {
+	t.Parallel()
+
 	rect := image.Rect(-1, -1, 15, 15)
 	colors := palette.Plan9
 	testCases := []struct {
@@ -83,6 +85,8 @@ func TestScanner(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			r := tc.img.Bounds()
 			s := newScanner(tc.img)

@@ -8,6 +8,8 @@ import (
 )
 
 func TestNew(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name      string
 		w, h      int
@@ -64,6 +66,8 @@ func TestNew(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := New(tc.w, tc.h, tc.c)
 			want := image.NewNRGBA(tc.dstBounds)
@@ -83,6 +87,8 @@ func BenchmarkNew(b *testing.B) {
 }
 
 func TestClone(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -308,6 +314,8 @@ func TestClone(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Clone(tc.src)
 			delta := 0
@@ -322,6 +330,8 @@ func TestClone(t *testing.T) {
 }
 
 func TestCrop(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -372,6 +382,8 @@ func TestCrop(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Crop(tc.src, tc.r)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -389,6 +401,8 @@ func BenchmarkCrop(b *testing.B) {
 }
 
 func TestCropCenter(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -457,6 +471,8 @@ func TestCropCenter(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := CropCenter(tc.src, tc.w, tc.h)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -467,6 +483,8 @@ func TestCropCenter(t *testing.T) {
 }
 
 func TestCropAnchor(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name   string
 		src    image.Image
@@ -773,6 +791,8 @@ func TestCropAnchor(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := CropAnchor(tc.src, tc.w, tc.h, tc.anchor)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -783,6 +803,8 @@ func TestCropAnchor(t *testing.T) {
 }
 
 func TestPaste(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src1 image.Image
@@ -951,6 +973,8 @@ func TestPaste(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Paste(tc.src1, tc.src2, tc.p)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -968,6 +992,8 @@ func BenchmarkPaste(b *testing.B) {
 }
 
 func TestPasteCenter(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src1 image.Image
@@ -1004,6 +1030,8 @@ func TestPasteCenter(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := PasteCenter(tc.src1, tc.src2)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -1014,6 +1042,8 @@ func TestPasteCenter(t *testing.T) {
 }
 
 func TestOverlay(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src1 image.Image
@@ -1112,6 +1142,8 @@ func TestOverlay(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Overlay(tc.src1, tc.src2, tc.p, tc.a)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -1129,6 +1161,8 @@ func BenchmarkOverlay(b *testing.B) {
 }
 
 func TestOverlayCenter(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src1 image.Image
@@ -1167,6 +1201,8 @@ func TestOverlayCenter(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := OverlayCenter(tc.src1, tc.src2, 0.5)
 			if !compareNRGBA(got, tc.want, 0) {

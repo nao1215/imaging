@@ -3,10 +3,13 @@ package imaging
 import (
 	"image"
 	"image/color"
+	"path/filepath"
 	"testing"
 )
 
 func TestGrayscale(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -35,6 +38,8 @@ func TestGrayscale(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Grayscale(tc.src)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -52,6 +57,8 @@ func BenchmarkGrayscale(b *testing.B) {
 }
 
 func TestInvert(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -80,6 +87,8 @@ func TestInvert(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Invert(tc.src)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -97,6 +106,8 @@ func BenchmarkInvert(b *testing.B) {
 }
 
 func TestAdjustSaturation(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -215,6 +226,8 @@ func TestAdjustSaturation(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := AdjustSaturation(tc.src, tc.p)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -225,12 +238,14 @@ func TestAdjustSaturation(t *testing.T) {
 }
 
 func TestAdjustSaturationGolden(t *testing.T) {
+	t.Parallel()
+
 	for name, p := range map[string]float64{
 		"out_saturation_m30.png": -30,
 		"out_saturation_p30.png": 30,
 	} {
 		got := AdjustSaturation(testdataFlowersSmallPNG, p)
-		want, err := Open("testdata/" + name)
+		want, err := Open(filepath.Join("testdata", name))
 		if err != nil {
 			t.Fatalf("failed to open image: %v", err)
 		}
@@ -248,6 +263,7 @@ func BenchmarkAdjustSaturation(b *testing.B) {
 }
 
 func TestAdjustHue(t *testing.T) {
+	t.Parallel()
 
 	srcPix := []uint8{
 		0xcc, 0x00, 0x00, 0x01, 0x00, 0xcc, 0x00, 0x02, 0x00, 0x00, 0xcc, 0x03,
@@ -438,6 +454,8 @@ func TestAdjustHue(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := AdjustHue(tc.src, tc.p)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -448,6 +466,8 @@ func TestAdjustHue(t *testing.T) {
 }
 
 func TestAdjustHueGolden(t *testing.T) {
+	t.Parallel()
+
 	for name, p := range map[string]float64{
 		"out_hue_m480.png": -480,
 		"out_hue_m120.png": -120,
@@ -475,6 +495,8 @@ func BenchmarkAdjustHue(b *testing.B) {
 }
 
 func TestAdjustContrast(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -593,6 +615,8 @@ func TestAdjustContrast(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := AdjustContrast(tc.src, tc.p)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -603,6 +627,8 @@ func TestAdjustContrast(t *testing.T) {
 }
 
 func TestAdjustContrastGolden(t *testing.T) {
+	t.Parallel()
+
 	for name, p := range map[string]float64{
 		"out_contrast_m15.png": -15,
 		"out_contrast_p15.png": 15,
@@ -626,6 +652,8 @@ func BenchmarkAdjustContrast(b *testing.B) {
 }
 
 func TestAdjustBrightness(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -744,6 +772,8 @@ func TestAdjustBrightness(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := AdjustBrightness(tc.src, tc.p)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -754,6 +784,8 @@ func TestAdjustBrightness(t *testing.T) {
 }
 
 func TestAdjustBrightnessGolden(t *testing.T) {
+	t.Parallel()
+
 	for name, p := range map[string]float64{
 		"out_brightness_m10.png": -10,
 		"out_brightness_p10.png": 10,
@@ -777,6 +809,8 @@ func BenchmarkAdjustBrightness(b *testing.B) {
 }
 
 func TestAdjustGamma(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -851,6 +885,8 @@ func TestAdjustGamma(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := AdjustGamma(tc.src, tc.p)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -861,6 +897,8 @@ func TestAdjustGamma(t *testing.T) {
 }
 
 func TestAdjustGammaGolden(t *testing.T) {
+	t.Parallel()
+
 	for name, g := range map[string]float64{
 		"out_gamma_0.75.png": 0.75,
 		"out_gamma_1.25.png": 1.25,
@@ -884,6 +922,8 @@ func BenchmarkAdjustGamma(b *testing.B) {
 }
 
 func TestAdjustSigmoid(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -962,6 +1002,8 @@ func TestAdjustSigmoid(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := AdjustSigmoid(tc.src, tc.m, tc.p)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -979,6 +1021,8 @@ func BenchmarkAdjustSigmoid(b *testing.B) {
 }
 
 func TestAdjustFunc(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -1039,6 +1083,8 @@ func TestAdjustFunc(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := AdjustFunc(tc.src, tc.fn)
 			if !compareNRGBA(got, tc.want, 0) {
