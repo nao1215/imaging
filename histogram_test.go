@@ -6,6 +6,8 @@ import (
 )
 
 func TestHistogram(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		img  image.Image
@@ -42,6 +44,8 @@ func TestHistogram(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Histogram(tc.img)
 			if got != tc.want {

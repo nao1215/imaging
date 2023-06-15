@@ -6,6 +6,8 @@ import (
 )
 
 func TestConvolve3x3(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name    string
 		src     image.Image
@@ -174,6 +176,8 @@ func TestConvolve3x3(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Convolve3x3(tc.src, tc.kernel, tc.options)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -184,6 +188,8 @@ func TestConvolve3x3(t *testing.T) {
 }
 
 func TestConvolve5x5(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name    string
 		src     image.Image
@@ -225,6 +231,8 @@ func TestConvolve5x5(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Convolve5x5(tc.src, tc.kernel, tc.options)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -235,6 +243,8 @@ func TestConvolve5x5(t *testing.T) {
 }
 
 func TestNormalizeKernel(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name   string
 		kernel []float64
@@ -294,6 +304,8 @@ func TestNormalizeKernel(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			normalizeKernel(tc.kernel)
 			for i := range tc.kernel {

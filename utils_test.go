@@ -89,6 +89,8 @@ func TestSetMaxProcs(t *testing.T) {
 }
 
 func TestClamp(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		f float64
 		u uint8
@@ -107,6 +109,8 @@ func TestClamp(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
+
 		if clamp(tc.f) != tc.u {
 			t.Fatalf("test [clamp %v %v] failed: %v", tc.f, tc.u, clamp(tc.f))
 		}
@@ -114,6 +118,8 @@ func TestClamp(t *testing.T) {
 }
 
 func TestReverse(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		pix  []uint8
 		want []uint8
@@ -137,6 +143,8 @@ func TestReverse(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run("", func(t *testing.T) {
 			reverse(tc.pix)
 			if !compareBytes(tc.pix, tc.want, 0) {
@@ -318,7 +326,11 @@ var rgbHSLTestCases = []struct {
 }
 
 func TestRGBToHSL(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range rgbHSLTestCases {
+		tc := tc
+
 		t.Run("", func(t *testing.T) {
 			h, s, l := rgbToHSL(tc.r, tc.g, tc.b)
 			if !compareFloat64(h, tc.h, 0.001) || !compareFloat64(s, tc.s, 0.001) || !compareFloat64(l, tc.l, 0.001) {
@@ -329,7 +341,11 @@ func TestRGBToHSL(t *testing.T) {
 }
 
 func TestHSLToRGB(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range rgbHSLTestCases {
+		tc := tc
+
 		t.Run("", func(t *testing.T) {
 			r, g, b := hslToRGB(tc.h, tc.s, tc.l)
 			if r != tc.r || g != tc.g || b != tc.b {

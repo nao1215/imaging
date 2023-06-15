@@ -9,7 +9,6 @@ import (
 	"image/draw"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,12 +25,12 @@ type badFS struct{}
 
 func (badFS) Create(name string) (io.WriteCloser, error) {
 	if name == "badFile.jpg" {
-		return badFile{ioutil.Discard}, nil
+		return badFile{io.Discard}, nil
 	}
 	return nil, errCreate
 }
 
-func (badFS) Open(name string) (io.ReadCloser, error) {
+func (badFS) Open(_ string) (io.ReadCloser, error) {
 	return nil, errOpen
 }
 
@@ -61,6 +60,8 @@ func (q quantizer) Quantize(p color.Palette, m image.Image) color.Palette {
 }
 
 func TestOpenSave(t *testing.T) {
+	t.Parallel()
+
 	imgWithoutAlpha := image.NewNRGBA(image.Rect(0, 0, 4, 6))
 	imgWithoutAlpha.Pix = []uint8{
 		0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -93,11 +94,11 @@ func TestOpenSave(t *testing.T) {
 		},
 	}
 
-	dir, err := ioutil.TempDir("", "imaging")
+	dir, err := os.MkdirTemp("", "imaging")
 	if err != nil {
 		t.Fatalf("failed to create temporary directory: %v", err)
 	}
-	defer os.RemoveAll(dir)
+	defer os.RemoveAll(dir) //nolint
 
 	for _, ext := range []string{"jpg", "jpeg", "png", "gif", "bmp", "tif", "tiff"} {
 		filename := filepath.Join(dir, "test."+ext)
@@ -174,6 +175,8 @@ func TestOpenSave(t *testing.T) {
 }
 
 func TestFormats(t *testing.T) {
+	t.Parallel()
+
 	formatNames := map[Format]string{
 		JPEG:       "JPEG",
 		PNG:        "PNG",
@@ -191,6 +194,8 @@ func TestFormats(t *testing.T) {
 }
 
 func TestFormatFromExtension(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		ext  string
@@ -221,6 +226,8 @@ func TestFormatFromExtension(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := FormatFromExtension(tc.ext)
 			if err != tc.err {
@@ -234,6 +241,8 @@ func TestFormatFromExtension(t *testing.T) {
 }
 
 func TestReadOrientation(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		path   string
 		orient orientation
@@ -249,6 +258,7 @@ func TestReadOrientation(t *testing.T) {
 		{"testdata/orientation_8.jpg", 8},
 	}
 	for _, tc := range testCases {
+		tc := tc
 		f, err := os.Open(tc.path)
 		if err != nil {
 			t.Fatalf("%q: failed to open: %v", tc.path, err)
@@ -261,6 +271,8 @@ func TestReadOrientation(t *testing.T) {
 }
 
 func TestReadOrientationFails(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		data string
@@ -367,6 +379,8 @@ func TestReadOrientationFails(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			if o := readOrientation(strings.NewReader(tc.data)); o != orientationUnspecified {
 				t.Fatalf("got orientation %d want %d", o, orientationUnspecified)
@@ -376,6 +390,8 @@ func TestReadOrientationFails(t *testing.T) {
 }
 
 func TestAutoOrientation(t *testing.T) {
+	t.Parallel()
+
 	toBW := func(img image.Image) []byte {
 		b := img.Bounds()
 		data := make([]byte, 0, b.Dx()*b.Dy())
@@ -416,6 +432,8 @@ func TestAutoOrientation(t *testing.T) {
 		{"testdata/orientation_8.jpg"},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		img, err := Open(tc.path, AutoOrientation(true))
 		if err != nil {
 			t.Fatal(err)

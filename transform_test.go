@@ -7,6 +7,8 @@ import (
 )
 
 func TestFlipH(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -35,6 +37,8 @@ func TestFlipH(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := FlipH(tc.src)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -52,6 +56,8 @@ func BenchmarkFlipH(b *testing.B) {
 }
 
 func TestFlipV(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -80,6 +86,8 @@ func TestFlipV(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := FlipV(tc.src)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -97,6 +105,8 @@ func BenchmarkFlipV(b *testing.B) {
 }
 
 func TestTranspose(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -124,6 +134,8 @@ func TestTranspose(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Transpose(tc.src)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -141,6 +153,8 @@ func BenchmarkTranspose(b *testing.B) {
 }
 
 func TestTransverse(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -168,6 +182,8 @@ func TestTransverse(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Transverse(tc.src)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -185,6 +201,8 @@ func BenchmarkTransverse(b *testing.B) {
 }
 
 func TestRotate90(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -212,6 +230,8 @@ func TestRotate90(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Rotate90(tc.src)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -229,6 +249,8 @@ func BenchmarkRotate90(b *testing.B) {
 }
 
 func TestRotate180(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -257,6 +279,8 @@ func TestRotate180(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Rotate180(tc.src)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -274,6 +298,8 @@ func BenchmarkRotate180(b *testing.B) {
 }
 
 func TestRotate270(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name string
 		src  image.Image
@@ -301,6 +327,8 @@ func TestRotate270(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Rotate270(tc.src)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -318,6 +346,8 @@ func BenchmarkRotate270(b *testing.B) {
 }
 
 func TestRotate(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name  string
 		src   image.Image
@@ -628,6 +658,8 @@ func TestRotate(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Rotate(tc.src, tc.angle, tc.bg)
 			if !compareNRGBA(got, tc.want, 0) {

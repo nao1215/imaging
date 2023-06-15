@@ -6,6 +6,8 @@ import (
 )
 
 func TestBlur(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name  string
 		src   image.Image
@@ -80,6 +82,8 @@ func TestBlur(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Blur(tc.src, tc.sigma)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -90,6 +94,8 @@ func TestBlur(t *testing.T) {
 }
 
 func TestBlurGolden(t *testing.T) {
+	t.Parallel()
+
 	for name, sigma := range map[string]float64{
 		"out_blur_0.5.png": 0.5,
 		"out_blur_1.5.png": 1.5,
@@ -113,6 +119,8 @@ func BenchmarkBlur(b *testing.B) {
 }
 
 func TestSharpen(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name  string
 		src   image.Image
@@ -205,6 +213,8 @@ func TestSharpen(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
+		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			got := Sharpen(tc.src, tc.sigma)
 			if !compareNRGBA(got, tc.want, 0) {
@@ -215,6 +225,8 @@ func TestSharpen(t *testing.T) {
 }
 
 func TestSharpenGolden(t *testing.T) {
+	t.Parallel()
+
 	for name, sigma := range map[string]float64{
 		"out_sharpen_0.5.png": 0.5,
 		"out_sharpen_1.5.png": 1.5,
