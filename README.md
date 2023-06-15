@@ -1,3 +1,12 @@
+![GitHub](https://img.shields.io/github/license/nao1215/imaging?style=flat-square)
+[![Go Reference](https://pkg.go.dev/badge/github.com/nao1215/imaging.svg)](https://pkg.go.dev/github.com/nao1215/imaging)
+![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/nao1215/imaging/coverage.svg)
+[![LinuxUnitTest](https://github.com/nao1215/imaging/actions/workflows/linux_test.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/linux_test.yml)
+[![MacUnitTest](https://github.com/nao1215/imaging/actions/workflows/mac_test.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/mac_test.yml)
+[![WindowsUnitTest](https://github.com/nao1215/imaging/actions/workflows/windows_test.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/windows_test.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/nao1215/imaging)](https://goreportcard.com/report/github.com/nao1215/imaging)
+[![reviewdog](https://github.com/nao1215/imaging/actions/workflows/reviewdog.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/reviewdog.yml)
+
 # Imaging
 **This Repository is forked from [disintegration/imaging](https://github.com/disintegration/imaging). The reason why I forked it is that the original version has been slowly updated. This repository makes bug fixes and multi-platforming.**
 
@@ -6,9 +15,12 @@ Package imaging provides basic image processing functions (resize, rotate, crop,
 All the image processing functions provided by the package accept any image type that implements `image.Image` interface
 as an input, and return a new image of `*image.NRGBA` type (32bit RGBA colors, non-premultiplied alpha).
 
-## Installation
-
-    go get -u github.com/nao1215/imaging
+## Support OS / Go version
+The following platforms and go versions have been unit tested.
+- Linux
+- Mac
+- Windows
+- Go ver 1.12 to 1.20
 
 ## Documentation
 
