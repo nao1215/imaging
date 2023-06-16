@@ -243,7 +243,7 @@ func TestReadOrientation(t *testing.T) {
 
 	testCases := []struct {
 		path   string
-		orient orientation
+		orient Orientation
 	}{
 		{"testdata/orientation_0.jpg", 0},
 		{"testdata/orientation_1.jpg", 1},
@@ -261,7 +261,7 @@ func TestReadOrientation(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%q: failed to open: %v", tc.path, err)
 		}
-		orient := readOrientation(f)
+		orient := ReadOrientation(f)
 		if orient != tc.orient {
 			t.Fatalf("%q: got orientation %d want %d", tc.path, orient, tc.orient)
 		}
@@ -380,8 +380,8 @@ func TestReadOrientationFails(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
-			if o := readOrientation(strings.NewReader(tc.data)); o != orientationUnspecified {
-				t.Fatalf("got orientation %d want %d", o, orientationUnspecified)
+			if o := ReadOrientation(strings.NewReader(tc.data)); o != OrientationUnspecified {
+				t.Fatalf("got orientation %d want %d", o, OrientationUnspecified)
 			}
 		})
 	}
