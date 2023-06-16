@@ -60,8 +60,6 @@ func (q quantizer) Quantize(p color.Palette, m image.Image) color.Palette {
 }
 
 func TestOpenSave(t *testing.T) {
-	t.Parallel()
-
 	imgWithoutAlpha := image.NewNRGBA(image.Rect(0, 0, 4, 6))
 	imgWithoutAlpha.Pix = []uint8{
 		0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
