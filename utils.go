@@ -32,11 +32,17 @@ func parallel(start, stop int, fn func(<-chan int)) {
 		procs = count
 	}
 
-	c := make(chan int, count)
-	for i := start; i < stop; i++ {
-		c <- i
-	}
-	close(c)
+	// Ref. https: //github.com/uber-go/guide/blob/master/style.md#channel-size-is-one-or-none
+	c := make(chan int)
+	done := make(chan struct{})
+
+	go func(c chan<- int) {
+		defer close(done)
+		for i := start; i < stop; i++ {
+			c <- i
+		}
+		close(c)
+	}(c)
 
 	var wg sync.WaitGroup
 	for i := 0; i < procs; i++ {
@@ -46,6 +52,7 @@ func parallel(start, stop int, fn func(<-chan int)) {
 			fn(c)
 		}()
 	}
+	<-done
 	wg.Wait()
 }
 
