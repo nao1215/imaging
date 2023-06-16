@@ -32,6 +32,7 @@ func parallel(start, stop int, fn func(<-chan int)) {
 		procs = count
 	}
 
+	// Ref. https: //github.com/uber-go/guide/blob/master/style.md#channel-size-is-one-or-none
 	c := make(chan int)
 	done := make(chan struct{})
 
