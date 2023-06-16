@@ -61,13 +61,13 @@ func Decode(r io.Reader, opts ...DecodeOption) (image.Image, error) {
 		return img, err
 	}
 
-	var orient orientation
+	var orient Orientation
 	pr, pw := io.Pipe()
 	r = io.TeeReader(r, pw)
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		orient = readOrientation(pr)
+		orient = ReadOrientation(pr)
 		io.Copy(io.Discard, pr) //nolint
 	}()
 
@@ -78,7 +78,7 @@ func Decode(r io.Reader, opts ...DecodeOption) (image.Image, error) {
 		return nil, err
 	}
 
-	return fixOrientation(img, orient), nil
+	return FixOrientation(img, orient), nil
 }
 
 // Open loads an image from file.
@@ -279,27 +279,36 @@ func Save(img image.Image, filename string, opts ...EncodeOption) (err error) {
 	return err
 }
 
-// orientation is an EXIF flag that specifies the transformation
+// Orientation is an EXIF flag that specifies the transformation
 // that should be applied to image to display it correctly.
-type orientation int
+type Orientation int
 
 const (
-	orientationUnspecified = 0
-	orientationNormal      = 1
-	orientationFlipH       = 2
-	orientationRotate180   = 3
-	orientationFlipV       = 4
-	orientationTranspose   = 5
-	orientationRotate270   = 6
-	orientationTransverse  = 7
-	orientationRotate90    = 8
+	// OrientationUnspecified is the default value. It means that the orientation is not specified.
+	OrientationUnspecified Orientation = 0
+	// OrientationNormal means that the image should be displayed as it is.
+	OrientationNormal Orientation = 1
+	// OrientationFlipH means that the image should be flipped horizontally.
+	OrientationFlipH Orientation = 2
+	// OrientationRotate180 means that the image should be rotated 180 degrees clockwise.
+	OrientationRotate180 Orientation = 3
+	// OrientationFlipV means that the image should be flipped vertically.
+	OrientationFlipV Orientation = 4
+	// OrientationTranspose means that the image should be transposed (flip vertically and rotate 270 degrees clockwise).
+	OrientationTranspose Orientation = 5
+	// OrientationRotate270 means that the image should be rotated 270 degrees clockwise.
+	OrientationRotate270 Orientation = 6
+	// OrientationTransverse means that the image should be transversed (flip horizontally and rotate 270 degrees clockwise).
+	OrientationTransverse Orientation = 7
+	// OrientationRotate90 means that the image should be rotated 90 degrees clockwise.
+	OrientationRotate90 Orientation = 8
 )
 
-// readOrientation tries to read the orientation EXIF flag from image data in r.
+// ReadOrientation tries to read the orientation EXIF flag from image data in r.
 // If the EXIF data block is not found or the orientation flag is not found
 // or any other error occures while reading the data, it returns the
 // orientationUnspecified (0) value.
-func readOrientation(r io.Reader) orientation {
+func ReadOrientation(r io.Reader) Orientation {
 	const (
 		markerSOI      = 0xffd8
 		markerAPP1     = 0xffe1
@@ -312,45 +321,45 @@ func readOrientation(r io.Reader) orientation {
 	// Check if JPEG SOI marker is present.
 	var soi uint16
 	if err := binary.Read(r, binary.BigEndian, &soi); err != nil {
-		return orientationUnspecified
+		return OrientationUnspecified
 	}
 	if soi != markerSOI {
-		return orientationUnspecified // Missing JPEG SOI marker.
+		return OrientationUnspecified // Missing JPEG SOI marker.
 	}
 
 	// Find JPEG APP1 marker.
 	for {
 		var marker, size uint16
 		if err := binary.Read(r, binary.BigEndian, &marker); err != nil {
-			return orientationUnspecified
+			return OrientationUnspecified
 		}
 		if err := binary.Read(r, binary.BigEndian, &size); err != nil {
-			return orientationUnspecified
+			return OrientationUnspecified
 		}
 		if marker>>8 != 0xff {
-			return orientationUnspecified // Invalid JPEG marker.
+			return OrientationUnspecified // Invalid JPEG marker.
 		}
 		if marker == markerAPP1 {
 			break
 		}
 		if size < 2 {
-			return orientationUnspecified // Invalid block size.
+			return OrientationUnspecified // Invalid block size.
 		}
 		if _, err := io.CopyN(io.Discard, r, int64(size-2)); err != nil {
-			return orientationUnspecified
+			return OrientationUnspecified
 		}
 	}
 
 	// Check if EXIF header is present.
 	var header uint32
 	if err := binary.Read(r, binary.BigEndian, &header); err != nil {
-		return orientationUnspecified
+		return OrientationUnspecified
 	}
 	if header != exifHeader {
-		return orientationUnspecified
+		return OrientationUnspecified
 	}
 	if _, err := io.CopyN(io.Discard, r, 2); err != nil {
-		return orientationUnspecified
+		return OrientationUnspecified
 	}
 
 	// Read byte order information.
@@ -359,7 +368,7 @@ func readOrientation(r io.Reader) orientation {
 		byteOrder    binary.ByteOrder
 	)
 	if err := binary.Read(r, binary.BigEndian, &byteOrderTag); err != nil {
-		return orientationUnspecified
+		return OrientationUnspecified
 	}
 	switch byteOrderTag {
 	case byteOrderBE:
@@ -367,74 +376,74 @@ func readOrientation(r io.Reader) orientation {
 	case byteOrderLE:
 		byteOrder = binary.LittleEndian
 	default:
-		return orientationUnspecified // Invalid byte order flag.
+		return OrientationUnspecified // Invalid byte order flag.
 	}
 	if _, err := io.CopyN(io.Discard, r, 2); err != nil {
-		return orientationUnspecified
+		return OrientationUnspecified
 	}
 
 	// Skip the EXIF offset.
 	var offset uint32
 	if err := binary.Read(r, byteOrder, &offset); err != nil {
-		return orientationUnspecified
+		return OrientationUnspecified
 	}
 	if offset < 8 {
-		return orientationUnspecified // Invalid offset value.
+		return OrientationUnspecified // Invalid offset value.
 	}
 	if _, err := io.CopyN(io.Discard, r, int64(offset-8)); err != nil {
-		return orientationUnspecified
+		return OrientationUnspecified
 	}
 
 	// Read the number of tags.
 	var numTags uint16
 	if err := binary.Read(r, byteOrder, &numTags); err != nil {
-		return orientationUnspecified
+		return OrientationUnspecified
 	}
 
 	// Find the orientation tag.
 	for i := 0; i < int(numTags); i++ {
 		var tag uint16
 		if err := binary.Read(r, byteOrder, &tag); err != nil {
-			return orientationUnspecified
+			return OrientationUnspecified
 		}
 		if tag != orientationTag {
 			if _, err := io.CopyN(io.Discard, r, 10); err != nil {
-				return orientationUnspecified
+				return OrientationUnspecified
 			}
 			continue
 		}
 		if _, err := io.CopyN(io.Discard, r, 6); err != nil {
-			return orientationUnspecified
+			return OrientationUnspecified
 		}
 		var val uint16
 		if err := binary.Read(r, byteOrder, &val); err != nil {
-			return orientationUnspecified
+			return OrientationUnspecified
 		}
 		if val < 1 || val > 8 {
-			return orientationUnspecified // Invalid tag value.
+			return OrientationUnspecified // Invalid tag value.
 		}
-		return orientation(val)
+		return Orientation(val)
 	}
-	return orientationUnspecified // Missing orientation tag.
+	return OrientationUnspecified // Missing orientation tag.
 }
 
-// fixOrientation applies a transform to img corresponding to the given orientation flag.
-func fixOrientation(img image.Image, o orientation) image.Image {
+// FixOrientation applies a transform to img corresponding to the given orientation flag.
+func FixOrientation(img image.Image, o Orientation) image.Image {
 	switch o {
-	case orientationNormal:
-	case orientationFlipH:
+	case OrientationNormal:
+	case OrientationFlipH:
 		img = FlipH(img)
-	case orientationFlipV:
+	case OrientationFlipV:
 		img = FlipV(img)
-	case orientationRotate90:
+	case OrientationRotate90:
 		img = Rotate90(img)
-	case orientationRotate180:
+	case OrientationRotate180:
 		img = Rotate180(img)
-	case orientationRotate270:
+	case OrientationRotate270:
 		img = Rotate270(img)
-	case orientationTranspose:
+	case OrientationTranspose:
 		img = Transpose(img)
-	case orientationTransverse:
+	case OrientationTransverse:
 		img = Transverse(img)
 	}
 	return img
