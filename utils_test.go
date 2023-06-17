@@ -166,7 +166,7 @@ func compareBytes(a, b []uint8, delta int) bool {
 		return false
 	}
 	for i := 0; i < len(a); i++ {
-		if absint(int(a[i])-int(b[i])) > delta {
+		if absInt(int(a[i])-int(b[i])) > delta {
 			return false
 		}
 	}

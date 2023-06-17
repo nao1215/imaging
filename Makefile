@@ -21,6 +21,9 @@ test: ## Start test
 bench: ## Start benchmark
 	env GOOS=$(GOOS) $(GO_TEST) -bench .
 
+compare-bench: ## Start compare benchmark between current and original code
+	cob --threshold 0.1 --base "d471645c770227ca1e63837f1a52cb647e30a11a"
+
 .DEFAULT_GOAL := help
 help:  
 	@grep -E '^[0-9a-zA-Z_-]+[[:blank:]]*:.*?## .*$$' $(MAKEFILE_LIST) | sort \

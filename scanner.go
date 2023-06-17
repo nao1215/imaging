@@ -5,22 +5,30 @@ import (
 	"image/color"
 )
 
+// scanner is a helper struct that allows us to read pixels from the image
 type scanner struct {
-	image   image.Image
-	w, h    int
+	// image is the image to read pixels from
+	image image.Image
+	// w, h are the width and height of the image
+	w, h int
+	// palette is the palette of the image, if any
 	palette []color.NRGBA
 }
 
+// newScanner creates a new scanner for the given image.
+// It also converts the palette to color.NRGBA slice.
 func newScanner(img image.Image) *scanner {
 	s := &scanner{
 		image: img,
 		w:     img.Bounds().Dx(),
 		h:     img.Bounds().Dy(),
 	}
-	if img, ok := img.(*image.Paletted); ok {
-		s.palette = make([]color.NRGBA, len(img.Palette))
-		for i := 0; i < len(img.Palette); i++ {
-			s.palette[i] = color.NRGBAModel.Convert(img.Palette[i]).(color.NRGBA)
+	if palImg, ok := img.(*image.Paletted); ok {
+		s.palette = make([]color.NRGBA, len(palImg.Palette))
+		for i, c := range palImg.Palette {
+			if rgba, ok := color.NRGBAModel.Convert(c).(color.NRGBA); ok {
+				s.palette[i] = rgba
+			}
 		}
 	}
 	return s
