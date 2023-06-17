@@ -23,4 +23,4 @@ jobs:
         run: curl -sfL https://raw.githubusercontent.com/knqyf263/cob/master/install.sh | sudo sh -s -- -b /usr/local/bin
 
       - name: Run Benchmark
-        run: /usr/local/bin/cob --threshold 0.25 --base "d471645c770227ca1e63837f1a52cb647e30a11a" --bench-args "test -bench . -benchtime 10s ./..."
+        run: /usr/local/bin/cob --threshold 0.25 --base "d471645c770227ca1e63837f1a52cb647e30a11a" --bench-args "test -bench . -benchtime 3s ./..."
