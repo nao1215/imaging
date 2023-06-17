@@ -2,6 +2,8 @@ package imaging
 
 import (
 	"image"
+	"image/color"
+	"image/draw"
 	"math"
 )
 
@@ -164,4 +166,72 @@ func Sharpen(img image.Image, sigma float64) *image.NRGBA {
 	})
 
 	return dst
+}
+
+// Mosaic produces a mosaic version of the image.
+// rect is the rectangle that apply the mosaic effect.
+// The rect must be within the image bounds otherwise the function returns a copy of the src image.
+//
+// Example:
+//
+//	rect := image.Rect(50, 50, 250, 250)
+//	dstImage := imaging.Mosaic(srcImage, rect)
+func Mosaic(img image.Image, rect image.Rectangle) *image.NRGBA {
+	const (
+		blockSize  = 10
+		mosaicSize = 4
+	)
+
+	rect = rect.Intersect(img.Bounds())
+	if !isValidRectangle(rect) {
+		// Return a copy of the input image if the rectangle is invalid
+		copyOutput := image.NewNRGBA(img.Bounds())
+		draw.Draw(copyOutput, img.Bounds(), img, image.Point{}, draw.Src)
+		return copyOutput
+	}
+	output := image.NewNRGBA(rect)
+	draw.Draw(output, rect, img, rect.Min, draw.Src) // copy image to output rectangle area
+
+	for row := rect.Min.Y; row < rect.Max.Y; row += blockSize {
+		for col := rect.Min.X; col < rect.Max.X; col += blockSize {
+			avgColor := getAverageColor(img, col, row, blockSize, mosaicSize)
+			blockRect := image.Rect(col, row, col+blockSize, row+blockSize)
+			draw.Draw(output, blockRect, &image.Uniform{avgColor}, image.Point{}, draw.Src)
+		}
+	}
+	return output
+}
+
+// getAverageColor get average color of the block in the image.
+// x, y is the top left corner of the block. blockSize is the size of the block. mosaicSize is the size of the mosaic.
+func getAverageColor(img image.Image, x, y, blockSize, mosaicSize int) color.Color {
+	var totalR, totalG, totalB, totalA uint32
+
+	for row := y; row < y+blockSize; row += mosaicSize {
+		for col := x; col < x+blockSize; col += mosaicSize {
+			for subRow := row; subRow < row+mosaicSize && subRow < y+blockSize; subRow++ {
+				for subCol := col; subCol < col+mosaicSize && subCol < x+blockSize; subCol++ {
+					r, g, b, a := img.At(subCol, subRow).RGBA()
+					totalR += r
+					totalG += g
+					totalB += b
+					totalA += a
+				}
+			}
+		}
+	}
+
+	totalPixels := uint32((blockSize / mosaicSize) * (blockSize / mosaicSize))
+	avgR := totalR / totalPixels
+	avgG := totalG / totalPixels
+	avgB := totalB / totalPixels
+	avgA := totalA / totalPixels
+
+	return color.NRGBA{uint8(avgR >> 8), uint8(avgG >> 8), uint8(avgB >> 8), uint8(avgA >> 8)}
+}
+
+// isValidRectangle returns true if the rectangle is valid.
+// A rectangle is valid if it has positive width and height.
+func isValidRectangle(rect image.Rectangle) bool {
+	return rect.Dx() > 0 && rect.Dy() > 0
 }
