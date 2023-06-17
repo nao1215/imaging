@@ -3,6 +3,7 @@ package imaging
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"image"
 	"image/draw"
 	"image/gif"
@@ -15,6 +16,7 @@ import (
 
 	"golang.org/x/image/bmp"
 	"golang.org/x/image/tiff"
+	"golang.org/x/sync/errgroup"
 )
 
 type fileSystem interface {
@@ -49,7 +51,7 @@ func AutoOrientation(enabled bool) DecodeOption {
 	}
 }
 
-// Decode reads an image from r.
+// Decode reads an image from io.Reader.
 func Decode(r io.Reader, opts ...DecodeOption) (image.Image, error) {
 	cfg := defaultDecodeConfig
 	for _, option := range opts {
@@ -60,28 +62,42 @@ func Decode(r io.Reader, opts ...DecodeOption) (image.Image, error) {
 		img, _, err := image.Decode(r)
 		return img, err
 	}
+	return decodeWithAutoOrientation(r)
+}
 
+// decodeWithAutoOrientation reads an image from io.Reader and automatically orientates it.
+func decodeWithAutoOrientation(r io.Reader) (image.Image, error) {
 	var orient Orientation
+
 	pr, pw := io.Pipe()
 	r = io.TeeReader(r, pw)
-	done := make(chan struct{})
-	go func() {
-		defer close(done)
+
+	eg := errgroup.Group{}
+	eg.Go(func() error {
 		orient = ReadOrientation(pr)
-		io.Copy(io.Discard, pr) //nolint
-	}()
+		if _, err := io.Copy(io.Discard, pr); err != nil {
+			return err
+		}
+		return nil
+	})
 
 	img, _, err := image.Decode(r)
-	pw.Close() //nolint
-	<-done
 	if err != nil {
 		return nil, err
 	}
 
+	// If the pipe writer is not closed at this point, a deadlock will occur.
+	if err := pw.Close(); err != nil {
+		return nil, err
+	}
+	if err = eg.Wait(); err != nil {
+		return nil, err
+	}
 	return FixOrientation(img, orient), nil
 }
 
-// Open loads an image from file.
+// Open loads an image from file. After opening the image file, decoding is
+// performed and Open() returns the image.Image interface.
 //
 // Examples:
 //
@@ -95,7 +111,15 @@ func Open(filename string, opts ...DecodeOption) (image.Image, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close() //nolint
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			if err == nil {
+				err = closeErr
+			} else {
+				err = fmt.Errorf("original error: %v, defer close error: %v", err, closeErr)
+			}
+		}
+	}()
 	return Decode(file, opts...)
 }
 
