@@ -31,7 +31,6 @@ linters:
     - gosec
     - misspell
     - nakedret
-    - nlreturn
     - noctx
     - nolintlint
     - paralleltest

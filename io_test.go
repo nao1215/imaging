@@ -42,6 +42,28 @@ func (badFile) Close() error {
 	return errClose
 }
 
+type closeErrorFS struct{}
+
+func (closeErrorFS) Open(_ string) (io.ReadCloser, error) {
+	return closeErrorFile{}, nil
+}
+
+func (closeErrorFS) Create(_ string) (io.WriteCloser, error) {
+	return nil, errors.New("this method should not be called")
+}
+
+type closeErrorFile struct {
+	io.ReadCloser
+}
+
+func (closeErrorFile) Read(_ []byte) (int, error) {
+	return 0, errors.New("read error")
+}
+
+func (closeErrorFile) Close() error {
+	return errClose
+}
+
 type quantizer struct {
 	palette []color.Color
 }
@@ -59,117 +81,132 @@ func (q quantizer) Quantize(p color.Palette, m image.Image) color.Palette {
 	return pal
 }
 
+// NOTE: This test contains a process that modifies global variables,
+// so it will generate errors when sub test parallelized.
 func TestOpenSave(t *testing.T) {
-	imgWithoutAlpha := image.NewNRGBA(image.Rect(0, 0, 4, 6))
-	imgWithoutAlpha.Pix = []uint8{
-		0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		0xff, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff,
-		0xff, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff,
-		0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0xff, 0xff, 0x88, 0x88, 0x88, 0xff, 0x88, 0x88, 0x88, 0xff,
-		0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0xff, 0xff, 0x88, 0x88, 0x88, 0xff, 0x88, 0x88, 0x88, 0xff,
-	}
-	imgWithAlpha := image.NewNRGBA(image.Rect(0, 0, 4, 6))
-	imgWithAlpha.Pix = []uint8{
-		0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		0xff, 0x00, 0x00, 0x80, 0xff, 0x00, 0x00, 0x80, 0x00, 0xff, 0x00, 0x80, 0x00, 0xff, 0x00, 0x80,
-		0xff, 0x00, 0x00, 0x80, 0xff, 0x00, 0x00, 0x80, 0x00, 0xff, 0x00, 0x80, 0x00, 0xff, 0x00, 0x80,
-		0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x88, 0x88, 0x88, 0x00, 0x88, 0x88, 0x88, 0x00,
-		0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x88, 0x88, 0x88, 0x00, 0x88, 0x88, 0x88, 0x00,
-	}
-
-	options := [][]EncodeOption{
-		{
-			JPEGQuality(100),
-		},
-		{
-			JPEGQuality(99),
-			GIFDrawer(draw.FloydSteinberg),
-			GIFNumColors(256),
-			GIFQuantizer(quantizer{palette.Plan9}),
-			PNGCompressionLevel(png.BestSpeed),
-		},
-	}
-
-	dir, err := os.MkdirTemp("", "imaging")
-	if err != nil {
-		t.Fatalf("failed to create temporary directory: %v", err)
-	}
-	defer os.RemoveAll(dir) //nolint
-
-	for _, ext := range []string{"jpg", "jpeg", "png", "gif", "bmp", "tif", "tiff"} {
-		filename := filepath.Join(dir, "test."+ext)
-
-		img := imgWithoutAlpha
-		if ext == "png" {
-			img = imgWithAlpha
+	t.Run("Open and save test", func(t *testing.T) {
+		imgWithoutAlpha := image.NewNRGBA(image.Rect(0, 0, 4, 6))
+		imgWithoutAlpha.Pix = []uint8{
+			0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+			0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+			0xff, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff,
+			0xff, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0xff,
+			0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0xff, 0xff, 0x88, 0x88, 0x88, 0xff, 0x88, 0x88, 0x88, 0xff,
+			0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0xff, 0xff, 0x88, 0x88, 0x88, 0xff, 0x88, 0x88, 0x88, 0xff,
+		}
+		imgWithAlpha := image.NewNRGBA(image.Rect(0, 0, 4, 6))
+		imgWithAlpha.Pix = []uint8{
+			0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+			0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+			0xff, 0x00, 0x00, 0x80, 0xff, 0x00, 0x00, 0x80, 0x00, 0xff, 0x00, 0x80, 0x00, 0xff, 0x00, 0x80,
+			0xff, 0x00, 0x00, 0x80, 0xff, 0x00, 0x00, 0x80, 0x00, 0xff, 0x00, 0x80, 0x00, 0xff, 0x00, 0x80,
+			0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x88, 0x88, 0x88, 0x00, 0x88, 0x88, 0x88, 0x00,
+			0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x88, 0x88, 0x88, 0x00, 0x88, 0x88, 0x88, 0x00,
 		}
 
-		for _, opts := range options {
-			err := Save(img, filename, opts...)
-			if err != nil {
-				t.Fatalf("failed to save image (%q): %v", filename, err)
+		options := [][]EncodeOption{
+			{
+				JPEGQuality(100),
+			},
+			{
+				JPEGQuality(99),
+				GIFDrawer(draw.FloydSteinberg),
+				GIFNumColors(256),
+				GIFQuantizer(quantizer{palette.Plan9}),
+				PNGCompressionLevel(png.BestSpeed),
+			},
+		}
+
+		dir, err := os.MkdirTemp("", "imaging")
+		if err != nil {
+			t.Fatalf("failed to create temporary directory: %v", err)
+		}
+		defer os.RemoveAll(dir) //nolint
+
+		for _, ext := range []string{"jpg", "jpeg", "png", "gif", "bmp", "tif", "tiff"} {
+			filename := filepath.Join(dir, "test."+ext)
+
+			img := imgWithoutAlpha
+			if ext == "png" {
+				img = imgWithAlpha
 			}
 
-			img2, err := Open(filename)
-			if err != nil {
-				t.Fatalf("failed to open image (%q): %v", filename, err)
-			}
-			got := Clone(img2)
+			for _, opts := range options {
+				err := Save(img, filename, opts...)
+				if err != nil {
+					t.Fatalf("failed to save image (%q): %v", filename, err)
+				}
 
-			delta := 0
-			if ext == "jpg" || ext == "jpeg" || ext == "gif" {
-				delta = 3
-			}
+				img2, err := Open(filename)
+				if err != nil {
+					t.Fatalf("failed to open image (%q): %v", filename, err)
+				}
+				got := Clone(img2)
 
-			if !compareNRGBA(got, img, delta) {
-				t.Fatalf("bad encode-decode result (ext=%q): got %#v want %#v", ext, got, img)
+				delta := 0
+				if ext == "jpg" || ext == "jpeg" || ext == "gif" {
+					delta = 3
+				}
+
+				if !compareNRGBA(got, img, delta) {
+					t.Fatalf("bad encode-decode result (ext=%q): got %#v want %#v", ext, got, img)
+				}
 			}
 		}
-	}
 
-	buf := &bytes.Buffer{}
-	err = Encode(buf, imgWithAlpha, JPEG)
-	if err != nil {
-		t.Fatalf("failed to encode alpha to JPEG: %v", err)
-	}
+		buf := &bytes.Buffer{}
+		err = Encode(buf, imgWithAlpha, JPEG)
+		if err != nil {
+			t.Fatalf("failed to encode alpha to JPEG: %v", err)
+		}
 
-	buf = &bytes.Buffer{}
-	err = Encode(buf, imgWithAlpha, Format(100))
-	if err != ErrUnsupportedFormat {
-		t.Fatalf("got %v want ErrUnsupportedFormat", err)
-	}
+		buf = &bytes.Buffer{}
+		err = Encode(buf, imgWithAlpha, Format(100))
+		if !errors.Is(err, ErrUnsupportedFormat) {
+			t.Fatalf("got %v want ErrUnsupportedFormat", err)
+		}
 
-	buf = bytes.NewBuffer([]byte("bad data"))
-	_, err = Decode(buf)
-	if err == nil {
-		t.Fatalf("decoding bad data: expected error got nil")
-	}
+		buf = bytes.NewBuffer([]byte("bad data"))
+		_, err = Decode(buf)
+		if err == nil {
+			t.Fatalf("decoding bad data: expected error got nil")
+		}
 
-	err = Save(imgWithAlpha, filepath.Join(dir, "test.unknown"))
-	if err != ErrUnsupportedFormat {
-		t.Fatalf("got %v want ErrUnsupportedFormat", err)
-	}
+		err = Save(imgWithAlpha, filepath.Join(dir, "test.unknown"))
+		if !errors.Is(err, ErrUnsupportedFormat) {
+			t.Fatalf("got %v want ErrUnsupportedFormat", err)
+		}
 
-	prevFS := fs
-	fs = badFS{}
-	defer func() { fs = prevFS }()
+		prevFS := fs
+		fs = badFS{}
+		defer func() { fs = prevFS }()
 
-	err = Save(imgWithAlpha, "test.jpg")
-	if err != errCreate {
-		t.Fatalf("got error %v want errCreate", err)
-	}
+		err = Save(imgWithAlpha, "test.jpg")
+		if !errors.Is(err, errCreate) {
+			t.Fatalf("got error %v want errCreate", err)
+		}
 
-	err = Save(imgWithAlpha, "badFile.jpg")
-	if err != errClose {
-		t.Fatalf("got error %v want errClose", err)
-	}
+		err = Save(imgWithAlpha, "badFile.jpg")
+		if !errors.Is(err, errClose) {
+			t.Fatalf("got error %v want errClose", err)
+		}
 
-	_, err = Open("test.jpg")
-	if err != errOpen {
-		t.Fatalf("got error %v want errOpen", err)
-	}
+		_, err = Open("test.jpg")
+		if !errors.Is(err, errOpen) {
+			t.Fatalf("got error %v want errOpen", err)
+		}
+	})
+
+	t.Run("defered close error", func(t *testing.T) {
+		fs = closeErrorFS{}
+		defer func() { fs = localFS{} }()
+
+		_, got := Open("dummy")
+		want := "original error: image: unknown format, defer close error: failed to close file"
+		if got.Error() != want {
+			t.Errorf("got=%v want=%v", got, want)
+		}
+	})
 }
 
 func TestFormats(t *testing.T) {
@@ -233,155 +270,6 @@ func TestFormatFromExtension(t *testing.T) {
 			}
 			if got != tc.want {
 				t.Errorf("got result %#v want %#v", got, tc.want)
-			}
-		})
-	}
-}
-
-func TestReadOrientation(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		path   string
-		orient Orientation
-	}{
-		{"testdata/orientation_0.jpg", 0},
-		{"testdata/orientation_1.jpg", 1},
-		{"testdata/orientation_2.jpg", 2},
-		{"testdata/orientation_3.jpg", 3},
-		{"testdata/orientation_4.jpg", 4},
-		{"testdata/orientation_5.jpg", 5},
-		{"testdata/orientation_6.jpg", 6},
-		{"testdata/orientation_7.jpg", 7},
-		{"testdata/orientation_8.jpg", 8},
-	}
-	for _, tc := range testCases {
-		tc := tc
-		f, err := os.Open(tc.path)
-		if err != nil {
-			t.Fatalf("%q: failed to open: %v", tc.path, err)
-		}
-		orient := ReadOrientation(f)
-		if orient != tc.orient {
-			t.Fatalf("%q: got orientation %d want %d", tc.path, orient, tc.orient)
-		}
-	}
-}
-
-func TestReadOrientationFails(t *testing.T) {
-	t.Parallel()
-
-	testCases := []struct {
-		name string
-		data string
-	}{
-		{
-			"empty",
-			"",
-		},
-		{
-			"missing SOI marker",
-			"\xff\xe1",
-		},
-		{
-			"missing APP1 marker",
-			"\xff\xd8",
-		},
-		{
-			"short read marker",
-			"\xff\xd8\xff",
-		},
-		{
-			"short read block size",
-			"\xff\xd8\xff\xe1\x00",
-		},
-		{
-			"invalid marker",
-			"\xff\xd8\x00\xe1\x00\x00",
-		},
-		{
-			"block size too small",
-			"\xff\xd8\xff\xe0\x00\x01",
-		},
-		{
-			"short read block",
-			"\xff\xd8\xff\xe0\x00\x08\x00",
-		},
-		{
-			"missing EXIF header",
-			"\xff\xd8\xff\xe1\x00\xff",
-		},
-		{
-			"invalid EXIF header",
-			"\xff\xd8\xff\xe1\x00\xff\x00\x00\x00\x00",
-		},
-		{
-			"missing EXIF header tail",
-			"\xff\xd8\xff\xe1\x00\xff\x45\x78\x69\x66",
-		},
-		{
-			"missing byte order tag",
-			"\xff\xd8\xff\xe1\x00\xff\x45\x78\x69\x66\x00\x00",
-		},
-		{
-			"invalid byte order tag",
-			"\xff\xd8\xff\xe1\x00\xff\x45\x78\x69\x66\x00\x00\x00\x00",
-		},
-		{
-			"missing byte order tail",
-			"\xff\xd8\xff\xe1\x00\xff\x45\x78\x69\x66\x00\x00\x49\x49",
-		},
-		{
-			"missing exif offset",
-			"\xff\xd8\xff\xe1\x00\xff\x45\x78\x69\x66\x00\x00\x49\x49\x00\x2a",
-		},
-		{
-			"invalid exif offset",
-			"\xff\xd8\xff\xe1\x00\xff\x45\x78\x69\x66\x00\x00\x4d\x4d\x00\x2a\x00\x00\x00\x07",
-		},
-		{
-			"read exif offset error",
-			"\xff\xd8\xff\xe1\x00\xff\x45\x78\x69\x66\x00\x00\x4d\x4d\x00\x2a\x00\x00\x00\x09",
-		},
-		{
-			"missing number of tags",
-			"\xff\xd8\xff\xe1\x00\xff\x45\x78\x69\x66\x00\x00\x4d\x4d\x00\x2a\x00\x00\x00\x08",
-		},
-		{
-			"zero number of tags",
-			"\xff\xd8\xff\xe1\x00\xff\x45\x78\x69\x66\x00\x00\x4d\x4d\x00\x2a\x00\x00\x00\x08\x00\x00",
-		},
-		{
-			"missing tag",
-			"\xff\xd8\xff\xe1\x00\xff\x45\x78\x69\x66\x00\x00\x4d\x4d\x00\x2a\x00\x00\x00\x08\x00\x01",
-		},
-		{
-			"missing tag offset",
-			"\xff\xd8\xff\xe1\x00\xff\x45\x78\x69\x66\x00\x00\x4d\x4d\x00\x2a\x00\x00\x00\x08\x00\x01\x00\x00",
-		},
-		{
-			"missing orientation tag",
-			"\xff\xd8\xff\xe1\x00\xff\x45\x78\x69\x66\x00\x00\x4d\x4d\x00\x2a\x00\x00\x00\x08\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00",
-		},
-		{
-			"missing orientation tag value offset",
-			"\xff\xd8\xff\xe1\x00\xff\x45\x78\x69\x66\x00\x00\x4d\x4d\x00\x2a\x00\x00\x00\x08\x00\x01\x01\x12",
-		},
-		{
-			"missing orientation value",
-			"\xff\xd8\xff\xe1\x00\xff\x45\x78\x69\x66\x00\x00\x4d\x4d\x00\x2a\x00\x00\x00\x08\x00\x01\x01\x12\x00\x03\x00\x00\x00\x01",
-		},
-		{
-			"invalid orientation value",
-			"\xff\xd8\xff\xe1\x00\xff\x45\x78\x69\x66\x00\x00\x4d\x4d\x00\x2a\x00\x00\x00\x08\x00\x01\x01\x12\x00\x03\x00\x00\x00\x01\x00\x09",
-		},
-	}
-	for _, tc := range testCases {
-		tc := tc
-
-		t.Run(tc.name, func(t *testing.T) {
-			if o := ReadOrientation(strings.NewReader(tc.data)); o != OrientationUnspecified {
-				t.Fatalf("got orientation %d want %d", o, OrientationUnspecified)
 			}
 		})
 	}
