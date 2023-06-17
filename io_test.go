@@ -82,8 +82,10 @@ func (q quantizer) Quantize(p color.Palette, m image.Image) color.Palette {
 }
 
 // NOTE: This test contains a process that modifies global variables,
-// so it will generate errors when parallelized.
+// so it will generate errors when sub test parallelized.
 func TestOpenSave(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Open and save test", func(t *testing.T) {
 		imgWithoutAlpha := image.NewNRGBA(image.Rect(0, 0, 4, 6))
 		imgWithoutAlpha.Pix = []uint8{
@@ -162,7 +164,7 @@ func TestOpenSave(t *testing.T) {
 
 		buf = &bytes.Buffer{}
 		err = Encode(buf, imgWithAlpha, Format(100))
-		if err != ErrUnsupportedFormat {
+		if !errors.Is(err, ErrUnsupportedFormat) {
 			t.Fatalf("got %v want ErrUnsupportedFormat", err)
 		}
 
@@ -173,7 +175,7 @@ func TestOpenSave(t *testing.T) {
 		}
 
 		err = Save(imgWithAlpha, filepath.Join(dir, "test.unknown"))
-		if err != ErrUnsupportedFormat {
+		if !errors.Is(err, ErrUnsupportedFormat) {
 			t.Fatalf("got %v want ErrUnsupportedFormat", err)
 		}
 
@@ -182,17 +184,17 @@ func TestOpenSave(t *testing.T) {
 		defer func() { fs = prevFS }()
 
 		err = Save(imgWithAlpha, "test.jpg")
-		if err != errCreate {
+		if !errors.Is(err, errCreate) {
 			t.Fatalf("got error %v want errCreate", err)
 		}
 
 		err = Save(imgWithAlpha, "badFile.jpg")
-		if err != errClose {
+		if !errors.Is(err, errClose) {
 			t.Fatalf("got error %v want errClose", err)
 		}
 
 		_, err = Open("test.jpg")
-		if err != errOpen {
+		if !errors.Is(err, errOpen) {
 			t.Fatalf("got error %v want errOpen", err)
 		}
 	})
