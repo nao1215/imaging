@@ -10,7 +10,6 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -18,18 +17,6 @@ import (
 	"golang.org/x/image/tiff"
 	"golang.org/x/sync/errgroup"
 )
-
-type fileSystem interface {
-	Create(string) (io.WriteCloser, error)
-	Open(string) (io.ReadCloser, error)
-}
-
-type localFS struct{}
-
-func (localFS) Create(name string) (io.WriteCloser, error) { return os.Create(name) }
-func (localFS) Open(name string) (io.ReadCloser, error)    { return os.Open(name) }
-
-var fs fileSystem = localFS{}
 
 type decodeConfig struct {
 	autoOrientation bool
