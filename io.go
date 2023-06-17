@@ -1,7 +1,6 @@
 package imaging
 
 import (
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"image"
@@ -118,13 +117,28 @@ type Format int
 
 // Image file formats.
 const (
+	// JPEG (Joint Photographic Experts Group): A widely used image format
+	// known for its lossy compression algorithm, making it suitable for photographs
+	// and complex images.
 	JPEG Format = iota
+	// PNG (Portable Network Graphics): An image format that supports lossless compression,
+	// providing high-quality graphics with transparency support. It is commonly used for
+	// web graphics and images with sharp edges.
 	PNG
+	// GIF (Graphics Interchange Format): An image format that supports animations and a
+	// limited color palette of 256 colors. It is commonly used for simple animations and
+	// graphics with areas of uniform color.
 	GIF
+	// TIFF (Tagged Image File Format): A flexible image format that supports lossless
+	// compression and can store high-quality images with a wide range of color depths.
+	// It is often used in professional settings and for archiving images.
 	TIFF
+	// BMP (Bitmap): A basic image format that stores pixel data without compression.
+	// It is widely supported but results in larger file sizes compared to compressed formats.
 	BMP
 )
 
+// formatExts maps image format extensions to Format.
 var formatExts = map[string]Format{
 	"jpg":  JPEG,
 	"jpeg": JPEG,
@@ -135,6 +149,7 @@ var formatExts = map[string]Format{
 	"bmp":  BMP,
 }
 
+// formatNames maps image formats to their names.
 var formatNames = map[Format]string{
 	JPEG: "JPEG",
 	PNG:  "PNG",
@@ -143,6 +158,7 @@ var formatNames = map[Format]string{
 	BMP:  "BMP",
 }
 
+// String returns the name of the image format.
 func (f Format) String() string {
 	return formatNames[f]
 }
@@ -166,14 +182,21 @@ func FormatFromFilename(filename string) (Format, error) {
 	return FormatFromExtension(ext)
 }
 
+// encodeConfig holds the optional parameters for the Encode() and Save() functions.
 type encodeConfig struct {
-	jpegQuality         int
-	gifNumColors        int
-	gifQuantizer        draw.Quantizer
-	gifDrawer           draw.Drawer
+	// jpegQuality JPEG quality (1-100). Default is 95.
+	jpegQuality int
+	// gifNumColors GIF encoder number of colors (1-256). Default is 256.
+	gifNumColors int
+	// gifQuantizer GIF encoder quantizer. Default is nil (use the default quantizer).
+	gifQuantizer draw.Quantizer
+	// gifDrawer GIF encoder drawer. Default is nil (use the default drawer).
+	gifDrawer draw.Drawer
+	// pngCompressionLevel PNG compression level (1-9). Default is DefaultCompression.
 	pngCompressionLevel png.CompressionLevel
 }
 
+// defaultEncodeConfig is the default encoding configuration.
 var defaultEncodeConfig = encodeConfig{
 	jpegQuality:         95,
 	gifNumColors:        256,
@@ -285,10 +308,11 @@ func Save(img image.Image, filename string, opts ...EncodeOption) (err error) {
 	if err != nil {
 		return err
 	}
+
 	err = Encode(file, img, f, opts...)
-	errc := file.Close()
+	errClose := file.Close()
 	if err == nil {
-		err = errc
+		err = errClose
 	}
 	return err
 }
@@ -317,129 +341,6 @@ const (
 	// OrientationRotate90 means that the image should be rotated 90 degrees clockwise.
 	OrientationRotate90 Orientation = 8
 )
-
-// ReadOrientation tries to read the orientation EXIF flag from image data in r.
-// If the EXIF data block is not found or the orientation flag is not found
-// or any other error occures while reading the data, it returns the
-// orientationUnspecified (0) value.
-func ReadOrientation(r io.Reader) Orientation {
-	const (
-		markerSOI      = 0xffd8
-		markerAPP1     = 0xffe1
-		exifHeader     = 0x45786966
-		byteOrderBE    = 0x4d4d
-		byteOrderLE    = 0x4949
-		orientationTag = 0x0112
-	)
-
-	// Check if JPEG SOI marker is present.
-	var soi uint16
-	if err := binary.Read(r, binary.BigEndian, &soi); err != nil {
-		return OrientationUnspecified
-	}
-	if soi != markerSOI {
-		return OrientationUnspecified // Missing JPEG SOI marker.
-	}
-
-	// Find JPEG APP1 marker.
-	for {
-		var marker, size uint16
-		if err := binary.Read(r, binary.BigEndian, &marker); err != nil {
-			return OrientationUnspecified
-		}
-		if err := binary.Read(r, binary.BigEndian, &size); err != nil {
-			return OrientationUnspecified
-		}
-		if marker>>8 != 0xff {
-			return OrientationUnspecified // Invalid JPEG marker.
-		}
-		if marker == markerAPP1 {
-			break
-		}
-		if size < 2 {
-			return OrientationUnspecified // Invalid block size.
-		}
-		if _, err := io.CopyN(io.Discard, r, int64(size-2)); err != nil {
-			return OrientationUnspecified
-		}
-	}
-
-	// Check if EXIF header is present.
-	var header uint32
-	if err := binary.Read(r, binary.BigEndian, &header); err != nil {
-		return OrientationUnspecified
-	}
-	if header != exifHeader {
-		return OrientationUnspecified
-	}
-	if _, err := io.CopyN(io.Discard, r, 2); err != nil {
-		return OrientationUnspecified
-	}
-
-	// Read byte order information.
-	var (
-		byteOrderTag uint16
-		byteOrder    binary.ByteOrder
-	)
-	if err := binary.Read(r, binary.BigEndian, &byteOrderTag); err != nil {
-		return OrientationUnspecified
-	}
-	switch byteOrderTag {
-	case byteOrderBE:
-		byteOrder = binary.BigEndian
-	case byteOrderLE:
-		byteOrder = binary.LittleEndian
-	default:
-		return OrientationUnspecified // Invalid byte order flag.
-	}
-	if _, err := io.CopyN(io.Discard, r, 2); err != nil {
-		return OrientationUnspecified
-	}
-
-	// Skip the EXIF offset.
-	var offset uint32
-	if err := binary.Read(r, byteOrder, &offset); err != nil {
-		return OrientationUnspecified
-	}
-	if offset < 8 {
-		return OrientationUnspecified // Invalid offset value.
-	}
-	if _, err := io.CopyN(io.Discard, r, int64(offset-8)); err != nil {
-		return OrientationUnspecified
-	}
-
-	// Read the number of tags.
-	var numTags uint16
-	if err := binary.Read(r, byteOrder, &numTags); err != nil {
-		return OrientationUnspecified
-	}
-
-	// Find the orientation tag.
-	for i := 0; i < int(numTags); i++ {
-		var tag uint16
-		if err := binary.Read(r, byteOrder, &tag); err != nil {
-			return OrientationUnspecified
-		}
-		if tag != orientationTag {
-			if _, err := io.CopyN(io.Discard, r, 10); err != nil {
-				return OrientationUnspecified
-			}
-			continue
-		}
-		if _, err := io.CopyN(io.Discard, r, 6); err != nil {
-			return OrientationUnspecified
-		}
-		var val uint16
-		if err := binary.Read(r, byteOrder, &val); err != nil {
-			return OrientationUnspecified
-		}
-		if val < 1 || val > 8 {
-			return OrientationUnspecified // Invalid tag value.
-		}
-		return Orientation(val)
-	}
-	return OrientationUnspecified // Missing orientation tag.
-}
 
 // FixOrientation applies a transform to img corresponding to the given orientation flag.
 func FixOrientation(img image.Image, o Orientation) image.Image {
