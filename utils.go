@@ -32,32 +32,25 @@ func parallel(start, stop int, fn func(<-chan int)) {
 		procs = count
 	}
 
-	// Ref. https: //github.com/uber-go/guide/blob/master/style.md#channel-size-is-one-or-none
-	c := make(chan int)
-	done := make(chan struct{})
-
-	go func(c chan<- int) {
-		defer close(done)
-		for i := start; i < stop; i++ {
-			c <- i
-		}
-		close(c)
-	}(c)
-
+	c := make(chan int, count)
 	var wg sync.WaitGroup
+	for i := start; i < stop; i++ {
+		c <- i
+	}
+	close(c)
+
+	wg.Add(procs)
 	for i := 0; i < procs; i++ {
-		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			fn(c)
 		}()
 	}
-	<-done
 	wg.Wait()
 }
 
-// absint returns the absolute value of i.
-func absint(i int) int {
+// absInt returns the absolute value of i.
+func absInt(i int) int {
 	if i < 0 {
 		return -i
 	}
