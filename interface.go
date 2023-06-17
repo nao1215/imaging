@@ -3,6 +3,7 @@ package imaging
 import (
 	"io"
 	"os"
+	"path/filepath"
 )
 
 var fs fileSystem = localFS{}
@@ -21,7 +22,7 @@ type fileSystem interface {
 type localFS struct{}
 
 // Create implements fileSystem interface. Same as os.Create.
-func (localFS) Create(name string) (io.WriteCloser, error) { return os.Create(name) }
+func (localFS) Create(name string) (io.WriteCloser, error) { return os.Create(filepath.Clean(name)) }
 
 // Open implements fileSystem interface. Same as os.Open.
-func (localFS) Open(name string) (io.ReadCloser, error) { return os.Open(name) }
+func (localFS) Open(name string) (io.ReadCloser, error) { return os.Open(filepath.Clean(name)) }
