@@ -61,23 +61,24 @@ func absInt(i int) int {
 func clamp(x float64) uint8 {
 	v := int64(x + 0.5)
 	if v > 255 {
-		return 255
+		v = 255
 	}
-	if v > 0 {
-		return uint8(v)
+	if v < 0 {
+		v = 0
 	}
-	return 0
+	return uint8(v)
 }
 
+// reverse reverses the order of pixels in the given slice.
 func reverse(pix []uint8) {
-	if len(pix) <= 4 {
+	length := len(pix)
+	if length <= 4 {
 		return
 	}
-	i := 0
-	j := len(pix) - 4
+	i, j := 0, length-4
 	for i < j {
-		pi := pix[i : i+4 : i+4]
-		pj := pix[j : j+4 : j+4]
+		pi := pix[i : i+4]
+		pj := pix[j : j+4]
 		pi[0], pj[0] = pj[0], pi[0]
 		pi[1], pj[1] = pj[1], pi[1]
 		pi[2], pj[2] = pj[2], pi[2]
@@ -87,6 +88,7 @@ func reverse(pix []uint8) {
 	}
 }
 
+// toNRGBA convert image.Image to *image.NRGBA.
 func toNRGBA(img image.Image) *image.NRGBA {
 	if img, ok := img.(*image.NRGBA); ok {
 		return &image.NRGBA{
@@ -99,21 +101,19 @@ func toNRGBA(img image.Image) *image.NRGBA {
 }
 
 // rgbToHSL converts a color from RGB to HSL.
-func rgbToHSL(r, g, b uint8) (float64, float64, float64) {
+func rgbToHSL(r, g, b uint8) (h float64, s float64, l float64) {
 	rr := float64(r) / 255
 	gg := float64(g) / 255
 	bb := float64(b) / 255
 
 	max := math.Max(rr, math.Max(gg, bb))
 	min := math.Min(rr, math.Min(gg, bb))
-
-	l := (max + min) / 2
+	l = (max + min) / 2
 
 	if max == min {
 		return 0, 0, l
 	}
 
-	var h, s float64
 	d := max - min
 	if l > 0.5 {
 		s = d / (2 - max - min)
@@ -124,7 +124,7 @@ func rgbToHSL(r, g, b uint8) (float64, float64, float64) {
 	switch max {
 	case rr:
 		h = (gg - bb) / d
-		if g < b {
+		if gg < bb {
 			h += 6
 		}
 	case gg:
@@ -153,13 +153,14 @@ func hslToRGB(h, s, l float64) (uint8, uint8, uint8) {
 	}
 	p := 2*l - q
 
-	r = hueToRGB(p, q, h+1/3.0)
+	r = hueToRGB(p, q, h+1.0/3.0)
 	g = hueToRGB(p, q, h)
-	b = hueToRGB(p, q, h-1/3.0)
+	b = hueToRGB(p, q, h-1.0/3.0)
 
 	return clamp(r * 255), clamp(g * 255), clamp(b * 255)
 }
 
+// hueToRGB converts hue to RGB. Helper function for hslToRGB.
 func hueToRGB(p, q, t float64) float64 {
 	if t < 0 {
 		t++
@@ -167,14 +168,14 @@ func hueToRGB(p, q, t float64) float64 {
 	if t > 1 {
 		t--
 	}
-	if t < 1/6.0 {
+	if t < 1.0/6.0 {
 		return p + (q-p)*6*t
 	}
-	if t < 1/2.0 {
+	if t < 1.0/2.0 {
 		return q
 	}
-	if t < 2/3.0 {
-		return p + (q-p)*(2/3.0-t)*6
+	if t < 2.0/3.0 {
+		return p + (q-p)*(2.0/3.0-t)*6
 	}
 	return p
 }
