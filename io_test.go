@@ -84,8 +84,6 @@ func (q quantizer) Quantize(p color.Palette, m image.Image) color.Palette {
 // NOTE: This test contains a process that modifies global variables,
 // so it will generate errors when sub test parallelized.
 func TestOpenSave(t *testing.T) {
-	t.Parallel()
-
 	t.Run("Open and save test", func(t *testing.T) {
 		imgWithoutAlpha := image.NewNRGBA(image.Rect(0, 0, 4, 6))
 		imgWithoutAlpha.Pix = []uint8{
