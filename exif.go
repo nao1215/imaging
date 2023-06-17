@@ -56,7 +56,7 @@ func findJPEGSOIMarker(r io.Reader) error {
 		return err
 	}
 	if soi != markerSOI {
-		return errors.New("Missing JPEG SOI marker")
+		return errors.New("missing JPEG SOI marker")
 	}
 	return nil
 }
@@ -77,13 +77,13 @@ func findJPEGAPP1Marker(r io.Reader) error {
 			return err
 		}
 		if marker>>8 != 0xff {
-			return errors.New("Invalid JPEG marker")
+			return errors.New("invalid JPEG marker")
 		}
 		if marker == markerAPP1 {
 			break
 		}
 		if size < 2 {
-			return errors.New("Invalid block size")
+			return errors.New("invalid block size")
 		}
 		if _, err := io.CopyN(io.Discard, r, int64(size-2)); err != nil {
 			return err
@@ -104,7 +104,7 @@ func findEXIFHeader(r io.Reader) error {
 		return err
 	}
 	if header != exifHeader {
-		return errors.New("EXIF header not found")
+		return errors.New("exif header not found")
 	}
 	if _, err := io.CopyN(io.Discard, r, 2); err != nil {
 		return err
@@ -132,7 +132,7 @@ func readByteOrder(r io.Reader) (binary.ByteOrder, error) {
 	case byteOrderLE:
 		byteOrder = binary.LittleEndian
 	default:
-		return nil, errors.New("Invalid byte order flag")
+		return nil, errors.New("invalid byte order flag")
 	}
 
 	if _, err := io.CopyN(io.Discard, r, 2); err != nil {
@@ -149,7 +149,7 @@ func skipEXIFOffset(r io.Reader, byteOrder binary.ByteOrder) error {
 		return err
 	}
 	if offset < 8 {
-		return errors.New("Invalid offset value")
+		return errors.New("invalid offset value")
 	}
 	if _, err := io.CopyN(io.Discard, r, int64(offset-8)); err != nil {
 		return err
@@ -195,7 +195,7 @@ func findOrientationTag(r io.Reader, byteOrder binary.ByteOrder, numTags uint16)
 			return OrientationUnspecified, err
 		}
 		if val < 1 || val > 8 {
-			return OrientationUnspecified, errors.New("Invalid tag value")
+			return OrientationUnspecified, errors.New("invalid tag value")
 		}
 
 		return Orientation(val), nil

@@ -148,6 +148,7 @@ func TestReadOrientationFails(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			if o := ReadOrientation(strings.NewReader(tc.data)); o != OrientationUnspecified {
 				t.Fatalf("got orientation %d want %d", o, OrientationUnspecified)
 			}
