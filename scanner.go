@@ -23,11 +23,12 @@ func newScanner(img image.Image) *scanner {
 		w:     img.Bounds().Dx(),
 		h:     img.Bounds().Dy(),
 	}
-	if _, ok := img.(*image.Paletted); ok {
-		s.palette = make([]color.NRGBA, len(img.(*image.Paletted).Palette))
-		for i, c := range img.(*image.Paletted).Palette {
-			rgba := color.NRGBAModel.Convert(c).(color.NRGBA)
-			s.palette[i] = rgba
+	if palImg, ok := img.(*image.Paletted); ok {
+		s.palette = make([]color.NRGBA, len(palImg.Palette))
+		for i, c := range palImg.Palette {
+			if rgba, ok := color.NRGBAModel.Convert(c).(color.NRGBA); ok {
+				s.palette[i] = rgba
+			}
 		}
 	}
 	return s
