@@ -18,10 +18,40 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// Open loads an image from file. After opening the image file, decoding is
+// performed and Open() returns the image.Image interface.
+//
+// Examples:
+//
+//	// Load an image from file.
+//	img, err := imaging.Open("test.jpg")
+//
+//	// Load an image and transform it depending on the EXIF orientation tag (if present).
+//	img, err := imaging.Open("test.jpg", imaging.AutoOrientation(true))
+func Open(filename string, opts ...DecodeOption) (image.Image, error) {
+	file, err := fs.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			if err == nil {
+				err = closeErr
+			} else {
+				err = fmt.Errorf("original error: %v, defer close error: %v", err, closeErr)
+			}
+		}
+	}()
+	return Decode(file, opts...)
+}
+
+// decodeConfig holds the optional parameters for the Decode().
 type decodeConfig struct {
+	// autoOrientation enables or disables the auto-orientation mode.
 	autoOrientation bool
 }
 
+// defaultDecodeConfig is the default decode config.
 var defaultDecodeConfig = decodeConfig{
 	autoOrientation: false,
 }
@@ -81,33 +111,6 @@ func decodeWithAutoOrientation(r io.Reader) (image.Image, error) {
 		return nil, err
 	}
 	return FixOrientation(img, orient), nil
-}
-
-// Open loads an image from file. After opening the image file, decoding is
-// performed and Open() returns the image.Image interface.
-//
-// Examples:
-//
-//	// Load an image from file.
-//	img, err := imaging.Open("test.jpg")
-//
-//	// Load an image and transform it depending on the EXIF orientation tag (if present).
-//	img, err := imaging.Open("test.jpg", imaging.AutoOrientation(true))
-func Open(filename string, opts ...DecodeOption) (image.Image, error) {
-	file, err := fs.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if closeErr := file.Close(); closeErr != nil {
-			if err == nil {
-				err = closeErr
-			} else {
-				err = fmt.Errorf("original error: %v, defer close error: %v", err, closeErr)
-			}
-		}
-	}()
-	return Decode(file, opts...)
 }
 
 // Format is an image file format.
