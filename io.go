@@ -28,7 +28,7 @@ import (
 //
 //	// Load an image and transform it depending on the EXIF orientation tag (if present).
 //	img, err := imaging.Open("test.jpg", imaging.AutoOrientation(true))
-func Open(filename string, opts ...DecodeOption) (image.Image, error) {
+func Open(filename string, opts ...DecodeOption) (img image.Image, err error) {
 	file, err := fs.Open(filename)
 	if err != nil {
 		return nil, err
