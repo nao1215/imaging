@@ -163,20 +163,6 @@ orientation tag (if present). Here's the example:
 img, err := imaging.Open("test.jpg", imaging.AutoOrientation(true))
 ```
 
-### What's the difference between `imaging` and `gift` packages?
-
-[imaging](https://github.com/nao1215/imaging)
-is designed to be a lightweight and simple image manipulation package.
-It provides basic image processing functions and a few helper functions
-such as `Open` and `Save`. It consistently returns *image.NRGBA image 
-type (8 bits per channel, RGBA).
-
-[gift](https://github.com/nao1215/gift)
-supports more advanced image processing, for example, sRGB/Linear color
-space conversions. It also supports different output image types
-(e.g. 16 bits per channel) and provides easy-to-use API for chaining
-multiple processing steps together.
-
 ## Example code
 
 ```go
