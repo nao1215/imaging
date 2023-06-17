@@ -38,7 +38,7 @@ func Open(filename string, opts ...DecodeOption) (image.Image, error) {
 			if err == nil {
 				err = closeErr
 			} else {
-				err = fmt.Errorf("original error: %w, defer close error: %w", err, closeErr)
+				err = fmt.Errorf("original error: %s, defer close error: %w", err.Error(), closeErr)
 			}
 		}
 	}()
