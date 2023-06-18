@@ -11,9 +11,10 @@ GOARCH      = ""
 GO_PKGROOT  = ./...
 GO_PACKAGES = $(shell $(GO_LIST) $(GO_PKGROOT))
 GINA_SRCS = $(shell find cmd/gina -name "*.go"  -not -name '*_test.go')
+GO_LDFLAGS =  -ldflags '-X main.Version=${VERSION}'
 
 build: ## Build project
-	$(GO_BUILD) -o $(APP) ./cmd/gina/...
+	$(GO_BUILD) $(GO_LDFLAGS) -o $(APP) ./cmd/gina/...
 
 clean: ## Clean project
 	-rm -rf cover.out cover.html $(APP)
