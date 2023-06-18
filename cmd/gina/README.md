@@ -19,7 +19,7 @@ The gina supports the following image formats:
 ### Use go install
 If you does not have the golang development environment installed on your system, please install golang from the [golang official website](https://go.dev/doc/install).
 ```shell
-$ go install github.com/nao1215/gina/cmd/gina@latest
+$ go install github.com/nao1215/imaging/cmd/gina@latest
 ```
 
 ### Build gina
