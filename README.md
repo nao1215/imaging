@@ -9,7 +9,7 @@
 [![reviewdog](https://github.com/nao1215/imaging/actions/workflows/reviewdog.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/reviewdog.yml)
 
 # Imaging
-**This Repository is forked from [disintegration/imaging](https://github.com/disintegration/imaging). The reason why I forked it is that the original version has been slowly updated. This repository makes bug fixes and multi-platforming.**
+**This Repository is forked from [disintegration/imaging](https://github.com/disintegration/imaging).** The reason why I forked it is that the original version has been slowly updated. This repository makes bug fixes and multi-platforming.
 
 Package imaging provides basic image processing functions (resize, rotate, crop, brightness/contrast adjustments, etc.).
 
@@ -30,6 +30,9 @@ https://pkg.go.dev/github.com/nao1215/imaging
 ## Usage examples
 
 A few usage examples can be found below. See the documentation for the full list of supported functions.
+
+### Sample command: gina
+As a sample implementation of the nao1215/imaging package, I have prepared the **[gina](cmd/gina/README.md)** command.
 
 ### Image resizing
 

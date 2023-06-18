@@ -1,6 +1,6 @@
 .PHONY: build test clean
 
-APP         = imaging
+APP         = gina
 VERSION     = $(shell git describe --tags --abbrev=0)
 GO          = go
 GO_BUILD    = $(GO) build
@@ -10,12 +10,21 @@ GOOS        = ""
 GOARCH      = ""
 GO_PKGROOT  = ./...
 GO_PACKAGES = $(shell $(GO_LIST) $(GO_PKGROOT))
+GINA_SRCS = $(shell find cmd/gina -name "*.go"  -not -name '*_test.go')
+GO_LDFLAGS =  -ldflags '-X main.Version=${VERSION}'
+
+build: ## Build project
+	$(GO_BUILD) $(GO_LDFLAGS) -o $(APP) ./cmd/gina/...
 
 clean: ## Clean project
-	-rm -rf $(APP) cover.out cover.html
+	-rm -rf cover.out cover.html $(APP)
 
-test: ## Start test
+test: ## Start imaging package test
 	env GOOS=$(GOOS) $(GO_TEST) -cover $(GO_PKGROOT) -coverprofile=cover.out
+	$(GO_TOOL) cover -html=cover.out -o cover.html
+
+test-gina: ## start gina package test
+	env GOOS=$(GOOS) $(GO_TEST) -cover ./cmd/gina/... -coverprofile=cover.out
 	$(GO_TOOL) cover -html=cover.out -o cover.html
 
 bench: ## Start benchmark
