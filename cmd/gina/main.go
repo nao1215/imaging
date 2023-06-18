@@ -32,6 +32,7 @@ processing methods provided by the nao1215/imaging package'.`,
 	cmd.AddCommand(newVersionCmd())
 	cmd.AddCommand(newBugReportCmd())
 	cmd.AddCommand(newResizeCmd())
+	cmd.AddCommand(newSharpenCmd())
 	cmd.AddCommand(newBlurCmd())
 	return cmd
 }

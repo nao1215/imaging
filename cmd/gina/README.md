@@ -37,6 +37,7 @@ Available Commands:
   bug-report  Submit a bug report at GitHub
   help        Help about any command
   resize      Resize image
+  sharpen     Sharpening the image
   version     Show imaging command version information
 ```
 ### Resize subcommand
@@ -56,12 +57,22 @@ Original image                     | Resize width=100                           
 ### Blur subcommand
 The blur subcommand outputs an image with blur effect intensity according to the sigma value
 ```
-$ gina blur -s 5.0 --output blur_awesome.png cmd/gina/img/awesome.png 
+$ gina blur --sigma 5.0 --output blur_awesome.png cmd/gina/img/awesome.png 
 save image: blur_awesome.png
 ```
 Original image                     | Blur sigma=5.0                           | 
 -----------------------------------|----------------------------------------|
 ![srcImage](img/awesome.png) | ![dstImage](img/blur_awesome.png) |
+
+### Sharpen subcommand
+The sharpen subcommand outputs an image with sharpening effect intensity according to the sigma value
+```
+$ gina sharpen --sigma 10.0 --output sharpen_awesome.png cmd/gina/img/awesome.png 
+save image: sharpen_awesome.png
+```
+Original image                     | Sharpen sigma=10.0                           | 
+-----------------------------------|----------------------------------------|
+![srcImage](img/awesome.png) | ![dstImage](img/sharpen_awesome.png) |
 
 
 ## LICENSE
