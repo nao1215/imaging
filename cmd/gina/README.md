@@ -30,6 +30,15 @@ $ make build
 ```
 
 ## How to use
+### Available subcommands
+```
+Available Commands:
+  blur        Blur the image according to sigma
+  bug-report  Submit a bug report at GitHub
+  help        Help about any command
+  resize      Resize image
+  version     Show imaging command version information
+```
 ### Resize subcommand
 resize subcommand resizes the image specified argument and saves it to the file specified by the --output parameter. --output default value is 'output.jpg'.
 
@@ -42,6 +51,17 @@ save image: resize_awesome.png
 Original image                     | Resize width=100                            | 
 -----------------------------------|----------------------------------------|
 ![srcImage](img/awesome.png) | ![dstImage](img/resize_awesome.png) |
+
+
+### Blur subcommand
+The blur subcommand outputs an image with blur effect intensity according to the sigma value
+```
+$ gina blur -s 5.0 --output blur_awesome.png cmd/gina/img/awesome.png 
+save image: blur_awesome.png
+```
+Original image                     | Blur sigma=5.0                           | 
+-----------------------------------|----------------------------------------|
+![srcImage](img/awesome.png) | ![dstImage](img/blur_awesome.png) |
 
 
 ## LICENSE
