@@ -2,6 +2,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -10,6 +11,7 @@ import (
 // main is entry point of gina command.
 func main() {
 	if err := newRootCmd().Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }
@@ -30,6 +32,6 @@ results can be obtained.'`,
 
 	cmd.AddCommand(newVersionCmd())
 	cmd.AddCommand(newBugReportCmd())
-
+	cmd.AddCommand(newResizeCmd())
 	return cmd
 }

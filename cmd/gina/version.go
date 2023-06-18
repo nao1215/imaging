@@ -19,13 +19,13 @@ func newVersionCmd() *cobra.Command {
 		Use:     "version",
 		Short:   "Show " + Name + " command version information",
 		Example: "   gina version",
-		Run:     getVersion,
+		Run:     version,
 	}
 }
 
-// getVersion return reddit-downloader command version.
+// version return reddit-downloader command version.
 // Version global variable is set by ldflags.
-func getVersion(_ *cobra.Command, _ []string) {
+func version(_ *cobra.Command, _ []string) {
 	version := "unknown"
 	if Version != "" {
 		version = Version
