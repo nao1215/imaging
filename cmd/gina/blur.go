@@ -26,7 +26,7 @@ The file extension specified in the --output parameter can be different from the
 	return &cmd
 }
 
-// resize have options for resize image.
+// blurer have options for resize image.
 type blurer struct {
 	sigma  float64
 	input  string
@@ -64,13 +64,13 @@ func blur(cmd *cobra.Command, args []string) error {
 	return blurer.blur()
 }
 
-func (r *blurer) blur() error {
-	src, err := imaging.Open(r.input)
+func (b *blurer) blur() error {
+	src, err := imaging.Open(b.input)
 	if err != nil {
 		return err
 	}
 
-	dst := imaging.Blur(src, r.sigma)
-	fmt.Fprintf(os.Stdout, "save image: %s\n", r.output)
-	return imaging.Save(dst, r.output)
+	dst := imaging.Blur(src, b.sigma)
+	fmt.Fprintf(os.Stdout, "save image: %s\n", b.output)
+	return imaging.Save(dst, b.output)
 }
