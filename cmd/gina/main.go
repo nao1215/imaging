@@ -33,5 +33,6 @@ results can be obtained.'`,
 	cmd.AddCommand(newVersionCmd())
 	cmd.AddCommand(newBugReportCmd())
 	cmd.AddCommand(newResizeCmd())
+	cmd.AddCommand(newSharpenCmd())
 	return cmd
 }
