@@ -13,7 +13,7 @@ GO_PACKAGES = $(shell $(GO_LIST) $(GO_PKGROOT))
 GINA_SRCS = $(shell find cmd/gina -name "*.go"  -not -name '*_test.go')
 
 build: ## Build project
-	cd cmd/gina && $(GO_BUILD) -o ../../$(APP) ./...
+	$(GO_BUILD) -o $(APP) ./cmd/gina/...
 
 clean: ## Clean project
 	-rm -rf cover.out cover.html $(APP)
