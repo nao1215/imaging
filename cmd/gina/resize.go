@@ -24,7 +24,7 @@ extension.`,
 
 	cmd.Flags().IntP("width", "W", 0, "width of output image")
 	cmd.Flags().IntP("height", "H", 0, "height of output image")
-	cmd.Flags().StringP("output", "o", "output.jpg", "output filename (default: output.jpg, supported format: jpg, png, gif, tiff, bmp)")
+	cmd.Flags().StringP("output", "o", "output.jpg", "output filename (supported format: jpg, png, gif, tiff, bmp)")
 
 	return &cmd
 }
