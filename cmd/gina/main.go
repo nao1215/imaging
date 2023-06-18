@@ -23,8 +23,7 @@ func newRootCmd() *cobra.Command {
 		Long: `gina --Go Image 'N' Assistance-- is simple image processing CLI tool.
 
 The gina was created to help developers understand 'how to use the image
-processing methods provided by the nao1215/imaging package' and 'what 
-results can be obtained.'`,
+processing methods provided by the nao1215/imaging package'.`,
 	}
 	cmd.CompletionOptions.DisableDefaultCmd = true
 	cmd.SilenceUsage = true
@@ -33,5 +32,6 @@ results can be obtained.'`,
 	cmd.AddCommand(newVersionCmd())
 	cmd.AddCommand(newBugReportCmd())
 	cmd.AddCommand(newResizeCmd())
+	cmd.AddCommand(newBlurCmd())
 	return cmd
 }
