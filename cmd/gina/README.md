@@ -74,6 +74,16 @@ Original image                     | Sharpen sigma=10.0                         
 -----------------------------------|----------------------------------------|
 ![srcImage](img/awesome.png) | ![dstImage](img/sharpen_awesome.png) |
 
+### Contrast subcommand
+The contrast subcommand outputs an image with adjusted contrast according to the percentage value. The percentage value is a value between -100 and 100. 
+```
+$ gina contrast --percentage 40 --output contrast_awesome.png cmd/gina/img/awesome.png 
+save image: contrast_awesome.png
+```
+Original image                     | Adjust contrast percentage = 40                           | 
+-----------------------------------|----------------------------------------|
+![srcImage](img/awesome.png) | ![dstImage](img/contrast_awesome.png) |
+
 
 ## LICENSE
 ### gina command

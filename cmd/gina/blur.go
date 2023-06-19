@@ -26,7 +26,7 @@ The file extension specified in the --output parameter can be different from the
 	return &cmd
 }
 
-// blurer have options for resize image.
+// blurer have options for blur image.
 type blurer struct {
 	sigma  float64
 	input  string
