@@ -35,6 +35,8 @@ $ make build
 Available Commands:
   blur        Blur the image according to sigma
   bug-report  Submit a bug report at GitHub
+  contrast    Adjust the contrast of an image
+  gamma       Adjust the gamma correction of an image
   help        Help about any command
   resize      Resize image
   sharpen     Sharpening the image
@@ -73,6 +75,26 @@ save image: sharpen_awesome.png
 Original image                     | Sharpen sigma=10.0                           | 
 -----------------------------------|----------------------------------------|
 ![srcImage](img/awesome.png) | ![dstImage](img/sharpen_awesome.png) |
+
+### Contrast subcommand
+The contrast subcommand outputs an image with adjusted contrast according to the percentage value. The percentage value is a value between -100 and 100. 
+```
+$ gina contrast --percentage 40 --output contrast_awesome.png cmd/gina/img/awesome.png 
+save image: contrast_awesome.png
+```
+Original image                     | Adjust contrast percentage=40                           | 
+-----------------------------------|----------------------------------------|
+![srcImage](img/awesome.png) | ![dstImage](img/contrast_awesome.png) |
+
+### Gamma subcommand
+The gamma subcommand outputs an image with adjusted gamma according to the gamma value. The gamma value must be greater than 0.
+``` 
+$ gina gamma --gamma 0.1 --output gamma_awesome.png cmd/gina/img/awesome.png 
+save image: gamma_awesome.png
+```
+Original image                     | Adjust gamma=0.1                          | 
+-----------------------------------|----------------------------------------|
+![srcImage](img/awesome.png) | ![dstImage](img/gamma_awesome.png) |
 
 
 ## LICENSE
