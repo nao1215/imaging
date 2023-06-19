@@ -5,6 +5,7 @@ import (
 	"math"
 )
 
+// gaussianBlurKernel returns a Gaussian kernel with the given radius and sigma.
 func gaussianBlurKernel(x, sigma float64) float64 {
 	return math.Exp(-(x*x)/(2*sigma*sigma)) / (sigma * math.Sqrt(2*math.Pi))
 }
