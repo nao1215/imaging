@@ -35,6 +35,8 @@ $ make build
 Available Commands:
   blur        Blur the image according to sigma
   bug-report  Submit a bug report at GitHub
+  contrast    Adjust the contrast of an image
+  gamma       Adjust the gamma correction of an image
   help        Help about any command
   resize      Resize image
   sharpen     Sharpening the image
