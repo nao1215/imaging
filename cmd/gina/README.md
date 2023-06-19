@@ -80,9 +80,19 @@ The contrast subcommand outputs an image with adjusted contrast according to the
 $ gina contrast --percentage 40 --output contrast_awesome.png cmd/gina/img/awesome.png 
 save image: contrast_awesome.png
 ```
-Original image                     | Adjust contrast percentage = 40                           | 
+Original image                     | Adjust contrast percentage=40                           | 
 -----------------------------------|----------------------------------------|
 ![srcImage](img/awesome.png) | ![dstImage](img/contrast_awesome.png) |
+
+### Gamma subcommand
+The gamma subcommand outputs an image with adjusted gamma according to the gamma value. The gamma value must be greater than 0.
+``` 
+$ gina gamma --gamma 0.1 --output gamma_awesome.png cmd/gina/img/awesome.png 
+save image: gamma_awesome.png
+```
+Original image                     | Adjust gamma=0.1                          | 
+-----------------------------------|----------------------------------------|
+![srcImage](img/awesome.png) | ![dstImage](img/gamma_awesome.png) |
 
 
 ## LICENSE
