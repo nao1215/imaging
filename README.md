@@ -1,12 +1,12 @@
-![GitHub](https://img.shields.io/github/license/nao1215/imaging?style=flat-square)
-[![Go Reference](https://pkg.go.dev/badge/github.com/nao1215/imaging.svg)](https://pkg.go.dev/github.com/nao1215/imaging)
-![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/nao1215/imaging/coverage.svg)
-[![Bench](https://github.com/nao1215/imaging/actions/workflows/benchmark.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/benchmark.yml)
-[![LinuxUnitTest](https://github.com/nao1215/imaging/actions/workflows/linux_test.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/linux_test.yml)
-[![MacUnitTest](https://github.com/nao1215/imaging/actions/workflows/mac_test.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/mac_test.yml)
-[![WindowsUnitTest](https://github.com/nao1215/imaging/actions/workflows/windows_test.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/windows_test.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/nao1215/imaging)](https://goreportcard.com/report/github.com/nao1215/imaging)
-[![reviewdog](https://github.com/nao1215/imaging/actions/workflows/reviewdog.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/reviewdog.yml)
+![GitHub](https://img.shields.io/github/license/go-spectest/imaging?style=flat-square)
+[![Go Reference](https://pkg.go.dev/badge/github.com/go-spectest/imaging.svg)](https://pkg.go.dev/github.com/go-spectest/imaging)
+![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/go-spectest/imaging/coverage.svg)
+[![Bench](https://github.com/go-spectest/imaging/actions/workflows/benchmark.yml/badge.svg)](https://github.com/go-spectest/imaging/actions/workflows/benchmark.yml)
+[![LinuxUnitTest](https://github.com/go-spectest/imaging/actions/workflows/linux_test.yml/badge.svg)](https://github.com/go-spectest/imaging/actions/workflows/linux_test.yml)
+[![MacUnitTest](https://github.com/go-spectest/imaging/actions/workflows/mac_test.yml/badge.svg)](https://github.com/go-spectest/imaging/actions/workflows/mac_test.yml)
+[![WindowsUnitTest](https://github.com/go-spectest/imaging/actions/workflows/windows_test.yml/badge.svg)](https://github.com/go-spectest/imaging/actions/workflows/windows_test.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/go-spectest/imaging)](https://goreportcard.com/report/github.com/go-spectest/imaging)
+[![reviewdog](https://github.com/go-spectest/imaging/actions/workflows/reviewdog.yml/badge.svg)](https://github.com/go-spectest/imaging/actions/workflows/reviewdog.yml)
 
 # Imaging
 **This Repository is forked from [disintegration/imaging](https://github.com/disintegration/imaging).** The reason why I forked it is that the original version has been slowly updated. This repository makes bug fixes and multi-platforming.
@@ -25,14 +25,14 @@ The following platforms and go versions have been unit tested.
 
 ## Documentation
 
-https://pkg.go.dev/github.com/nao1215/imaging
+https://pkg.go.dev/github.com/go-spectest/imaging
 
 ## Usage examples
 
 A few usage examples can be found below. See the documentation for the full list of supported functions.
 
 ### Sample command: gina
-As a sample implementation of the nao1215/imaging package, I have prepared the **[gina](cmd/gina/README.md)** command.
+As a sample implementation of the go-spectest/imaging package, I have prepared the **[gina](cmd/gina/README.md)** command.
 
 ### Image resizing
 
@@ -176,7 +176,7 @@ import (
 	"image/color"
 	"log"
 
-	"github.com/nao1215/imaging"
+	"github.com/go-spectest/imaging"
 )
 
 func main() {

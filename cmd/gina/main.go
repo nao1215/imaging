@@ -1,4 +1,4 @@
-// Package main is sample code for github.com/nao1215/imaging
+// Package main is sample code for github.com/go-spectest/imaging
 package main
 
 import (
@@ -23,7 +23,7 @@ func newRootCmd() *cobra.Command {
 		Long: `gina --Go Image 'N' Assistance-- is simple image processing CLI tool.
 
 The gina was created to help developers understand 'how to use the image
-processing methods provided by the nao1215/imaging package'.`,
+processing methods provided by the go-spectest/imaging package'.`,
 	}
 	cmd.CompletionOptions.DisableDefaultCmd = true
 	cmd.SilenceUsage = true
