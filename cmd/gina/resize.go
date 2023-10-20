@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/nao1215/imaging"
+	"github.com/go-spectest/imaging"
 	"github.com/spf13/cobra"
 )
 
