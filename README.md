@@ -1,6 +1,6 @@
 ![GitHub](https://img.shields.io/github/license/go-spectest/imaging?style=flat-square)
 [![Go Reference](https://pkg.go.dev/badge/github.com/go-spectest/imaging.svg)](https://pkg.go.dev/github.com/go-spectest/imaging)
-![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/go-spectest/imaging/coverage.svg)
+![Coverage](https://raw.githubusercontent.com/go-spectest/octocovs-central-repo/main/badges/go-spectest/imaging/coverage.svg)
 [![Bench](https://github.com/go-spectest/imaging/actions/workflows/benchmark.yml/badge.svg)](https://github.com/go-spectest/imaging/actions/workflows/benchmark.yml)
 [![LinuxUnitTest](https://github.com/go-spectest/imaging/actions/workflows/linux_test.yml/badge.svg)](https://github.com/go-spectest/imaging/actions/workflows/linux_test.yml)
 [![MacUnitTest](https://github.com/go-spectest/imaging/actions/workflows/mac_test.yml/badge.svg)](https://github.com/go-spectest/imaging/actions/workflows/mac_test.yml)
