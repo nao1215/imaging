@@ -1,9 +1,9 @@
-module github.com/go-spectest/imaging/cmd/gina
+module github.com/nao1215/imaging/cmd/gina
 
 go 1.20
 
 require (
-	github.com/go-spectest/imaging v1.0.6
+	github.com/nao1215/imaging v1.0.6
 	github.com/google/go-cmp v0.6.0
 	github.com/spf13/cobra v1.7.0
 )

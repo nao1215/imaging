@@ -5,7 +5,7 @@ import (
 	"image/color"
 	"log"
 
-	"github.com/go-spectest/imaging"
+	"github.com/nao1215/imaging"
 )
 
 func Example() {

@@ -4,7 +4,7 @@
 </p>
 
 The gina command is a CLI tool for image processing. The gina was created to help developers understand 'how to use the image
-processing methods provided by the [go-spectest/imaging](https://github.com/go-spectest/imaging) package'.
+processing methods provided by the [nao1215/imaging](https://github.com/nao1215/imaging) package'.
 
 The gina aims to be a command with multiple subcommands, focusing on simple functionality rather than being a feature-rich command like [ImageMagick](https://github.com/ImageMagick/ImageMagick).
 
@@ -19,12 +19,12 @@ The gina supports the following image formats:
 ### Use go install
 If you does not have the golang development environment installed on your system, please install golang from the [golang official website](https://go.dev/doc/install).
 ```shell
-$ go install github.com/go-spectest/imaging/cmd/gina@latest
+$ go install github.com/nao1215/imaging/cmd/gina@latest
 ```
 
 ### Build gina
 ```shell
-$ git clone git@github.com:go-spectest/imaging.git
+$ git clone git@github.com:nao1215/imaging.git
 $ cd imaging
 $ make build
 ```

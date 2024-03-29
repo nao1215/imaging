@@ -1,4 +1,4 @@
-module github.com/go-spectest/imaging
+module github.com/nao1215/imaging
 
 go 1.20
 
