@@ -11,11 +11,17 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: ["1.20", "1.23"]
+        # The floor go.mod declares and the newest release. The floor moved to
+        # 1.25 because golang.org/x/image 0.41.0, the first release carrying the
+        # tiff decoder security fixes this library needs, requires it. "stable"
+        # tracks each Go release without an edit, and is used rather than "1"
+        # because setup-go resolves "1" from its own manifest, which lags a
+        # fresh release.
+        go-version: ["1.25", "stable"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Setup Go ${{ matrix.go-version }}
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version: ${{ matrix.go-version }}
 

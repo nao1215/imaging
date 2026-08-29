@@ -20,7 +20,7 @@ The following platforms and go versions have been unit tested.
 - Linux
 - Mac
 - Windows
-- Go ver 1.16 to 1.20
+- Go 1.25 or later
 
 ## Documentation
 
