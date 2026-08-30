@@ -11,8 +11,10 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
+	"time"
 )
 
 var (
@@ -336,4 +338,86 @@ func TestAutoOrientation(t *testing.T) {
 	if _, err := Decode(strings.NewReader("invalid data"), AutoOrientation(true)); err == nil {
 		t.Fatal("expected error got nil")
 	}
+}
+
+// TestDecodeAutoOrientationDoesNotLeakGoroutines covers the resource contract
+// of the auto-orientation path. That path reads the image a second time on its
+// own goroutine, through a pipe, to look for the EXIF orientation tag, and the
+// goroutine only finishes once the pipe writer is closed. Closing it on the
+// success path alone leaves one goroutine blocked per failed decode, forever,
+// which turns a malformed upload into a permanent cost rather than a failed
+// request.
+//
+// The leak was one goroutine per call, so a hundred iterations separate it from
+// scheduling noise by two orders of magnitude and the bound can stay loose.
+func TestDecodeAutoOrientationDoesNotLeakGoroutines(t *testing.T) { //nolint:paralleltest // it counts goroutines process-wide, so a sibling test running beside it would be indistinguishable from a leak
+	var valid bytes.Buffer
+	if err := Encode(&valid, New(4, 4, color.NRGBA{1, 2, 3, 255}), PNG); err != nil {
+		t.Fatalf("encode the fixture: %v", err)
+	}
+
+	testCases := []struct {
+		name      string
+		input     []byte
+		wantError bool
+	}{
+		{
+			name:      "input that is not an image at all",
+			input:     []byte("not an image"),
+			wantError: true,
+		},
+		{
+			// Truncated after a valid header, so the decoder fails partway and
+			// the tee is left mid-stream rather than never started.
+			name:      "a PNG truncated after its header",
+			input:     valid.Bytes()[:len(valid.Bytes())/2],
+			wantError: true,
+		},
+		{
+			name:      "a valid image",
+			input:     valid.Bytes(),
+			wantError: false,
+		},
+	}
+
+	for _, tc := range testCases { //nolint:paralleltest // see the note on this test: the count is process-wide
+		t.Run(tc.name, func(t *testing.T) {
+			const runs = 100
+
+			// Run once first so any one-time initialisation is not counted.
+			_, _ = Decode(bytes.NewReader(tc.input), AutoOrientation(true))
+			before := settledGoroutines()
+
+			for i := 0; i < runs; i++ {
+				_, err := Decode(bytes.NewReader(tc.input), AutoOrientation(true))
+				if tc.wantError && err == nil {
+					t.Fatalf("run %d: decoded without an error", i)
+				}
+				if !tc.wantError && err != nil {
+					t.Fatalf("run %d: %v", i, err)
+				}
+			}
+
+			if leaked := settledGoroutines() - before; leaked > runs/4 {
+				t.Errorf("%d goroutines still running after %d decodes, want them all finished", leaked, runs)
+			}
+		})
+	}
+}
+
+// settledGoroutines returns the goroutine count once it stops changing, so a
+// worker that is on its way out is not mistaken for one that is stuck.
+func settledGoroutines() int {
+	last := runtime.NumGoroutine()
+	stable := 0
+	for i := 0; i < 100 && stable < 3; i++ {
+		runtime.GC()
+		time.Sleep(10 * time.Millisecond)
+		if n := runtime.NumGoroutine(); n == last {
+			stable++
+		} else {
+			last, stable = n, 0
+		}
+	}
+	return last
 }
