@@ -3,6 +3,7 @@ package imaging
 import (
 	"image"
 	"image/color"
+	"math"
 	"path/filepath"
 	"testing"
 )
@@ -1100,5 +1101,62 @@ func BenchmarkAdjustFunc(b *testing.B) {
 		AdjustFunc(testdataBranchesJPG, func(c color.NRGBA) color.NRGBA {
 			return color.NRGBA{c.B, c.G, c.R, c.A}
 		})
+	}
+}
+
+// TestAdjustSigmoidDegenerateParameters covers the parameters for which the
+// sigmoid curve cannot be built. AdjustSigmoid already treats a factor of zero
+// as "no contrast change" and returns the image, so a factor that is
+// numerically indistinguishable from zero has to do the same. It used to divide
+// by a range that had underflowed, fill the lookup table with NaN, and return a
+// black image with no error, which is the kind of result that surfaces as a
+// black thumbnail rather than as a failed call.
+func TestAdjustSigmoidDegenerateParameters(t *testing.T) {
+	t.Parallel()
+
+	src := New(3, 2, color.NRGBA{128, 64, 192, 255})
+
+	testCases := []struct {
+		name     string
+		midpoint float64
+		factor   float64
+	}{
+		{"a factor too small to resolve", 0.5, 1e-300},
+		{"the same factor negated", 0.5, -1e-300},
+		{"a factor of zero", 0.5, 0},
+		{"a NaN factor", 0.5, math.NaN()},
+		{"a NaN midpoint", math.NaN(), 3},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := AdjustSigmoid(src, tc.midpoint, tc.factor)
+			if !compareNRGBA(got, src, 0) {
+				t.Errorf("AdjustSigmoid(src, %v, %v) = %v, want the source unchanged (%v)",
+					tc.midpoint, tc.factor, got.Pix[:4], src.Pix[:4])
+			}
+		})
+	}
+}
+
+// TestAdjustSigmoidStillAdjusts pins the other side of that guard: a factor
+// small enough to be unusual but large enough to resolve must still produce the
+// curve, so the degenerate check cannot be widened into swallowing real work.
+func TestAdjustSigmoidStillAdjusts(t *testing.T) {
+	t.Parallel()
+
+	src := New(3, 2, color.NRGBA{32, 64, 192, 255})
+	for _, factor := range []float64{1e-6, 0.5, 3, -3} {
+		got := AdjustSigmoid(src, 0.5, factor)
+		if got.Bounds() != src.Bounds() {
+			t.Fatalf("factor %v: bounds %v, want %v", factor, got.Bounds(), src.Bounds())
+		}
+		// The curve is anchored at both ends, so a mid-tone must stay a
+		// mid-tone rather than collapse to black or white.
+		if c := got.NRGBAAt(0, 0); c.A != 255 || (c.R == 0 && c.G == 0 && c.B == 0) {
+			t.Errorf("factor %v produced %v, which is not an adjustment of %v", factor, c, src.NRGBAAt(0, 0))
+		}
 	}
 }

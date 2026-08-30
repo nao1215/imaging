@@ -207,6 +207,17 @@ func AdjustSigmoid(img image.Image, midpoint, factor float64) *image.NRGBA {
 	sig1 := sigmoid(a, b, 1)
 	e := 1.0e-6
 
+	// Both branches below scale by the range of the curve, so a range that has
+	// collapsed leaves nothing to scale by: a factor small enough that every
+	// sigmoid(a, b, x) rounds to the same float64 makes this zero, and a NaN
+	// parameter makes it NaN. Either way the curve is flat and the adjustment
+	// is the one already handled above, so return the image rather than divide.
+	// Dividing produced a black image for a small positive factor and a flat
+	// midpoint-grey one for its negative, with no error either way.
+	if d := sig1 - sig0; d == 0 || math.IsNaN(d) {
+		return Clone(img)
+	}
+
 	if factor > 0 {
 		for i := 0; i < 256; i++ {
 			x := float64(i) / 255.0
