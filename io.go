@@ -97,17 +97,24 @@ func decodeWithAutoOrientation(r io.Reader) (image.Image, error) {
 		return nil
 	})
 
-	img, _, err := image.Decode(r)
-	if err != nil {
-		return nil, err
-	}
+	img, _, decodeErr := image.Decode(r)
 
-	// If the pipe writer is not closed at this point, a deadlock will occur.
-	if err := pw.Close(); err != nil {
-		return nil, err
+	// Closing the writer is what lets the reader above see EOF and finish, so
+	// it has to happen on every path out of here, not only the one where the
+	// image parsed. Returning on a decode error before this leaves that
+	// goroutine blocked on the pipe for the life of the process, which turns a
+	// malformed image into a permanent leak rather than a failed call.
+	closeErr := pw.Close()
+	waitErr := eg.Wait()
+
+	if decodeErr != nil {
+		return nil, decodeErr
 	}
-	if err = eg.Wait(); err != nil {
-		return nil, err
+	if closeErr != nil {
+		return nil, closeErr
+	}
+	if waitErr != nil {
+		return nil, waitErr
 	}
 	return FixOrientation(img, orient), nil
 }
