@@ -15,8 +15,20 @@ type scanner struct {
 	palette []color.NRGBA
 }
 
+// paletteSize is the number of entries scanner.palette always holds. A pixel of
+// a paletted image is one byte, so every value it can take indexes this table.
+const paletteSize = 256
+
 // newScanner creates a new scanner for the given image.
 // It also converts the palette to color.NRGBA slice.
+//
+// The converted palette is always paletteSize entries long, however short the
+// image's own palette is, and entries the image does not define are left as the
+// zero color.NRGBA, which is transparent. An index a palette does not define has
+// no correct color, and answering with a transparent one keeps the undefined
+// pixel visibly absent rather than painting it with an arbitrary neighbour.
+// Sizing the table to the pixel type rather than to the palette is also what
+// lets scanPaletted index it without a per-pixel bounds check.
 func newScanner(img image.Image) *scanner {
 	s := &scanner{
 		image: img,
@@ -24,8 +36,15 @@ func newScanner(img image.Image) *scanner {
 		h:     img.Bounds().Dy(),
 	}
 	if palImg, ok := img.(*image.Paletted); ok {
-		s.palette = make([]color.NRGBA, len(palImg.Palette))
+		s.palette = make([]color.NRGBA, paletteSize)
 		for i, c := range palImg.Palette {
+			if i >= paletteSize {
+				break
+			}
+			// A palette may hold a nil color, which the model cannot convert.
+			if c == nil {
+				continue
+			}
 			if rgba, ok := color.NRGBAModel.Convert(c).(color.NRGBA); ok {
 				s.palette[i] = rgba
 			}
