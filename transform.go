@@ -135,6 +135,16 @@ func Rotate270(img image.Image) *image.NRGBA {
 func Rotate(img image.Image, angle float64, bgColor color.Color) *image.NRGBA {
 	angle = angle - math.Floor(angle/360)*360
 
+	// Normalising above turns any non-finite angle into NaN, since both
+	// Inf-Inf and anything involving NaN are NaN, so one check covers both. It
+	// has to happen before the size is computed: converting a non-finite size
+	// with int() is undefined in Go and differs by architecture -- amd64 gives
+	// the most negative int64 while arm64 saturates a positive infinity to the
+	// maximum -- so the guard below cannot be relied on to catch it everywhere.
+	if math.IsNaN(angle) {
+		return image.NewNRGBA(image.Rect(0, 0, 0, 0))
+	}
+
 	switch angle {
 	case 0:
 		return Clone(img)
@@ -150,11 +160,13 @@ func Rotate(img image.Image, angle float64, bgColor color.Color) *image.NRGBA {
 	srcW := src.Bounds().Max.X
 	srcH := src.Bounds().Max.Y
 	dstW, dstH := rotatedSize(srcW, srcH, angle)
-	dst := image.NewNRGBA(image.Rect(0, 0, dstW, dstH))
-
+	// Check the size before allocating with it, not after: image.NewNRGBA
+	// panics on a non-positive or huge rectangle, so a guard placed below it
+	// never runs.
 	if dstW <= 0 || dstH <= 0 {
-		return dst
+		return image.NewNRGBA(image.Rect(0, 0, 0, 0))
 	}
+	dst := image.NewNRGBA(image.Rect(0, 0, dstW, dstH))
 
 	srcXOff := float64(srcW)/2 - 0.5
 	srcYOff := float64(srcH)/2 - 0.5

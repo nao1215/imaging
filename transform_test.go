@@ -3,6 +3,7 @@ package imaging
 import (
 	"image"
 	"image/color"
+	"math"
 	"testing"
 )
 
@@ -673,5 +674,72 @@ func BenchmarkRotate(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		Rotate(testdataBranchesJPG, 30, color.Transparent)
+	}
+}
+
+// TestRotateNonFiniteAngle covers angles that cannot be turned into a
+// destination size. Rotate used to allocate the destination before checking it,
+// so a non-finite angle reached image.NewNRGBA and panicked there with a
+// message about rectangle dimensions that said nothing about the angle. An
+// angle usually arrives from arithmetic rather than a literal, so this is
+// reachable without anyone writing an infinity.
+func TestRotateNonFiniteAngle(t *testing.T) {
+	t.Parallel()
+
+	src := New(7, 5, color.NRGBA{10, 20, 30, 255})
+
+	testCases := []struct {
+		name  string
+		angle float64
+	}{
+		{"positive infinity", math.Inf(1)},
+		{"negative infinity", math.Inf(-1)},
+		{"not a number", math.NaN()},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := Rotate(src, tc.angle, color.NRGBA{})
+			if !got.Bounds().Empty() {
+				t.Errorf("Rotate(src, %v) bounds = %v, want an empty image", tc.angle, got.Bounds())
+			}
+		})
+	}
+}
+
+// TestRotateOrdinaryAnglesUnaffected pins the sizes the ordinary angles produce,
+// so the guard added for the non-finite ones cannot widen into them. The four
+// right angles take dedicated fast paths and the rest go through rotatedSize.
+func TestRotateOrdinaryAnglesUnaffected(t *testing.T) {
+	t.Parallel()
+
+	src := New(7, 5, color.NRGBA{10, 20, 30, 255})
+
+	testCases := []struct {
+		angle float64
+		want  image.Rectangle
+	}{
+		{0, image.Rect(0, 0, 7, 5)},
+		{90, image.Rect(0, 0, 5, 7)},
+		{180, image.Rect(0, 0, 7, 5)},
+		{270, image.Rect(0, 0, 5, 7)},
+		{360, image.Rect(0, 0, 7, 5)},
+		{45, image.Rect(0, 0, 8, 8)},
+		{-45, image.Rect(0, 0, 8, 8)},
+		{0.0001, image.Rect(0, 0, 7, 5)},
+	}
+
+	for _, tc := range testCases {
+		if got := Rotate(src, tc.angle, color.NRGBA{}); got.Bounds() != tc.want {
+			t.Errorf("Rotate(src, %v) bounds = %v, want %v", tc.angle, got.Bounds(), tc.want)
+		}
+	}
+
+	// A zero-area source reaches the same size guard by the other route.
+	empty := Rotate(New(0, 0, color.NRGBA{}), 45, color.NRGBA{})
+	if !empty.Bounds().Empty() {
+		t.Errorf("rotating a zero-area image gave %v, want an empty image", empty.Bounds())
 	}
 }
