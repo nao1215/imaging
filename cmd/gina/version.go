@@ -9,9 +9,9 @@ import (
 
 var (
 	// Version value is set by ldflags
-	Version string //nolint
+	Version string
 	// Name is cli command name
-	Name = "imaging" //nolint
+	Name = "imaging"
 )
 
 func newVersionCmd() *cobra.Command {

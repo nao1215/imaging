@@ -47,6 +47,8 @@ func TestHistogram(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := Histogram(tc.img)
 			if got != tc.want {
 				t.Fatalf("got histogram %#v want %#v", got, tc.want)

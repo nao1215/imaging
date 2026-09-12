@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 )
 
-var fs fileSystem = localFS{} //nolint
+var fs fileSystem = localFS{}
 
 // fileSystem is an interface for file system operations.
 // Mainly used for testing purposes.

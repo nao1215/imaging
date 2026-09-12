@@ -3,6 +3,13 @@ run:
   go: "1.25"
 linters:
   default: none
+  # gochecknoglobals and gochecknoinits are deliberately absent. The exported
+  # resample filters -- NearestNeighbor, Lanczos, CatmullRom and the rest -- are
+  # package-level variables because that is this package's published API,
+  # inherited from disintegration/imaging and depended on by every caller, and
+  # the init that builds them is how they come to exist. A finding that can only
+  # be resolved by breaking every user is not a finding this repository can act
+  # on.
   enable:
     - asciicheck
     - bodyclose
@@ -12,8 +19,6 @@ linters:
     - errorlint
     - exhaustive
     - forcetypeassert
-    - gochecknoglobals
-    - gochecknoinits
     - goconst
     - gocritic
     - gosec
@@ -36,6 +41,12 @@ linters:
     - wastedassign
     - whitespace
   settings:
+    exhaustive:
+      # A switch that ends in `default:` has answered every member of the type,
+      # whether or not it named them. scanner.go relies on this for the YCbCr
+      # subsample ratios and tools.go for the anchors, where the default is the
+      # centred case.
+      default-signifies-exhaustive: true
     tagliatelle:
       case:
         rules:
@@ -43,10 +54,48 @@ linters:
         use-field-name: true
   exclusions:
     generated: lax
+    rules:
+      # goconst on a table-driven test reports the format names the cases are
+      # built out of ("JPEG", "PNG"). Naming them would move the case data away
+      # from the case.
+      - linters:
+          - goconst
+        path: .*_test\.go
+      # G115 flags the narrowing conversions in the YCbCr and 16-bit scan paths.
+      # Each is bounded by the branch above it -- the classic clamp from the
+      # standard library's own colour conversion, where the shift has already put
+      # the value in range -- and this is the hot loop of every resize, so the
+      # conversions stay as they are.
+      - linters:
+          - gosec
+        path: scanner(_test)?\.go
+        text: G115
+      # A colour model converts to the type it is named for -- color.NRGBAModel
+      # produces a color.NRGBA -- so the assertion after Convert cannot fail. It
+      # is left forced rather than checked: a comma-ok here would add a branch no
+      # test can reach, and if the standard library ever changed, a panic names
+      # the problem where a zero-valued colour would quietly corrupt the output.
+      - linters:
+          - forcetypeassert
+        source: Model\.Convert\(
+      # gina writes one progress line per command to stdout. A write to stdout
+      # that fails has nowhere left to report it, and the exit status already
+      # carries whether the conversion worked.
+      - linters:
+          - errcheck
+        path: cmd/gina/.*\.go
+        source: fmt\.Fprintf\(os\.Stdout
     paths:
       - third_party$
       - builtin$
       - examples$
+issues:
+  # Report every finding. The defaults stop at 3 per message and 50 per linter,
+  # which is fine for a reviewer reading one pull request and wrong for a gate:
+  # a run that says "50 issues" cannot be cleared, because clearing 50 reveals
+  # however many were never printed.
+  max-issues-per-linter: 0
+  max-same-issues: 0
 formatters:
   enable:
     - goimports

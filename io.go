@@ -352,7 +352,9 @@ const (
 // FixOrientation applies a transform to img corresponding to the given orientation flag.
 func FixOrientation(img image.Image, o Orientation) image.Image {
 	switch o {
-	case OrientationNormal:
+	case OrientationUnspecified, OrientationNormal:
+		// Nothing to do: the file either carried no orientation tag or carried
+		// the one that means "already the right way up".
 	case OrientationFlipH:
 		img = FlipH(img)
 	case OrientationFlipV:

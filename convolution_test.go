@@ -179,6 +179,8 @@ func TestConvolve3x3(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := Convolve3x3(tc.src, tc.kernel, tc.options)
 			if !compareNRGBA(got, tc.want, 0) {
 				t.Fatalf("got result %#v want %#v", got, tc.want)
@@ -234,6 +236,8 @@ func TestConvolve5x5(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := Convolve5x5(tc.src, tc.kernel, tc.options)
 			if !compareNRGBA(got, tc.want, 0) {
 				t.Fatalf("got result %#v want %#v", got, tc.want)
@@ -307,6 +311,8 @@ func TestNormalizeKernel(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			normalizeKernel(tc.kernel)
 			for i := range tc.kernel {
 				if tc.kernel[i] != tc.want[i] {

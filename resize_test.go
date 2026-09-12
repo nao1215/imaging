@@ -204,6 +204,8 @@ func TestResize(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := Resize(tc.src, tc.w, tc.h, tc.f)
 			if !compareNRGBA(got, tc.want, 0) {
 				t.Fatalf("got result %#v want %#v", got, tc.want)
@@ -233,6 +235,8 @@ func TestResampleFilters(t *testing.T) {
 		Cosine,
 	} {
 		t.Run("", func(t *testing.T) {
+			t.Parallel()
+
 			src := image.NewNRGBA(image.Rect(-1, -1, 2, 3))
 			got := Resize(src, 5, 6, filter)
 			want := image.NewNRGBA(image.Rect(0, 0, 5, 6))
@@ -379,6 +383,8 @@ func TestFit(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := Fit(tc.src, tc.w, tc.h, tc.f)
 			if !compareNRGBA(got, tc.want, 0) {
 				t.Fatalf("got result %#v want %#v", got, tc.want)
@@ -484,6 +490,8 @@ func TestFill(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := Fill(tc.src, tc.w, tc.h, tc.a, tc.f)
 			if !compareNRGBA(got, tc.want, 0) {
 				t.Fatalf("got result %#v want %#v", got, tc.want)
@@ -636,6 +644,8 @@ func TestResizeAndCrop(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := resizeAndCrop(tc.src, tc.w, tc.h, tc.a, tc.f)
 			if !compareNRGBA(got, tc.want, 0) {
 				t.Fatalf("got result %#v want %#v", got, tc.want)
@@ -767,6 +777,8 @@ func TestCropAndResize(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := cropAndResize(tc.src, tc.w, tc.h, tc.a, tc.f)
 			if !compareNRGBA(got, tc.want, 0) {
 				t.Fatalf("got result %#v want %#v", got, tc.want)
@@ -852,6 +864,8 @@ func TestThumbnail(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := Thumbnail(tc.src, tc.w, tc.h, tc.f)
 			if !compareNRGBA(got, tc.want, 0) {
 				t.Fatalf("got result %#v want %#v", got, tc.want)

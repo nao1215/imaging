@@ -22,7 +22,9 @@ func mustOpen(filename string) image.Image {
 	return img
 }
 
-func TestParallel(t *testing.T) {
+// Not parallel: testParallelN moves runtime.GOMAXPROCS, which every other test
+// in the package reads through parallel().
+func TestParallel(t *testing.T) { //nolint:paralleltest // see above
 	for _, n := range []int{0, 1, 10, 100, 1000} {
 		for _, p := range []int{1, 2, 4, 8, 16, 100} {
 			if !testParallelN(n, p) {
@@ -50,7 +52,9 @@ func testParallelN(n, procs int) bool {
 	return true
 }
 
-func TestParallelMaxProcs(t *testing.T) {
+// Not parallel: testParallelMaxProcsN calls SetMaxProcs, which writes the
+// package-level maxProcs.
+func TestParallelMaxProcs(t *testing.T) { //nolint:paralleltest // see above
 	for _, n := range []int{0, 1, 10, 100, 1000} {
 		for _, p := range []int{1, 2, 4, 8, 16, 100} {
 			if !testParallelMaxProcsN(n, p) {
@@ -77,7 +81,8 @@ func testParallelMaxProcsN(n, procs int) bool {
 	return true
 }
 
-func TestSetMaxProcs(t *testing.T) {
+// Not parallel: it writes the package-level maxProcs and reads it back.
+func TestSetMaxProcs(t *testing.T) { //nolint:paralleltest // see above
 	for _, p := range []int{-1, 0, 10} {
 		SetMaxProcs(p)
 		if int(atomic.LoadInt64(&maxProcs)) != p {
@@ -146,6 +151,8 @@ func TestReverse(t *testing.T) {
 		tc := tc
 
 		t.Run("", func(t *testing.T) {
+			t.Parallel()
+
 			reverse(tc.pix)
 			if !compareBytes(tc.pix, tc.want, 0) {
 				t.Fatalf("got pix %v want %v", tc.pix, tc.want)
@@ -332,6 +339,8 @@ func TestRGBToHSL(t *testing.T) {
 		tc := tc
 
 		t.Run("", func(t *testing.T) {
+			t.Parallel()
+
 			h, s, l := rgbToHSL(tc.r, tc.g, tc.b)
 			if !compareFloat64(h, tc.h, 0.001) || !compareFloat64(s, tc.s, 0.001) || !compareFloat64(l, tc.l, 0.001) {
 				t.Fatalf("(%d, %d, %d): got (%.3f, %.3f, %.3f) want (%.3f, %.3f, %.3f)", tc.r, tc.g, tc.b, h, s, l, tc.h, tc.s, tc.l)
@@ -347,6 +356,8 @@ func TestHSLToRGB(t *testing.T) {
 		tc := tc
 
 		t.Run("", func(t *testing.T) {
+			t.Parallel()
+
 			r, g, b := hslToRGB(tc.h, tc.s, tc.l)
 			if r != tc.r || g != tc.g || b != tc.b {
 				t.Fatalf("(%.3f, %.3f, %.3f): got (%d, %d, %d) want (%d, %d, %d)", tc.h, tc.s, tc.l, r, g, b, tc.r, tc.g, tc.b)
