@@ -27,3 +27,32 @@ jobs:
 
       - name: MultiVersionUnitTest
         run: make test
+
+  cross-build:
+    name: Cross build (${{ matrix.goos }})
+
+    # The three test workflows run on the operating systems GitHub hosts
+    # runners for. This is the other half, and the cheap one: whether the two
+    # modules compile for the BSDs at all. They do today. A library is reached
+    # by `go get` from whatever machine the caller has, so a build that stops
+    # working there fails in their terminal rather than here unless something
+    # watches it. No binary is produced and a leg takes seconds.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        goos: [freebsd, openbsd, netbsd]
+    env:
+      GOOS: ${{ matrix.goos }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: "stable"
+
+      - name: Build the library
+        run: go build ./...
+
+      - name: Build gina
+        run: go build ./...
+        working-directory: cmd/gina
