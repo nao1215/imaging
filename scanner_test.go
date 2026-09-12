@@ -88,6 +88,8 @@ func TestScanner(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			r := tc.img.Bounds()
 			s := newScanner(tc.img)
 			for y := r.Min.Y; y < r.Max.Y; y++ {
@@ -300,7 +302,8 @@ func TestScannerMalformedPalette(t *testing.T) {
 			newScanner(img).scan(0, 0, size, size, dst)
 
 			for j := 0; j < len(dst); j += 4 {
-				got := color.NRGBA{dst[j], dst[j+1], dst[j+2], dst[j+3]}
+				// j steps by 4 through a slice whose length is a multiple of 4.
+				got := color.NRGBA{dst[j], dst[j+1], dst[j+2], dst[j+3]} //nolint:gosec // see above
 				if got != tc.want {
 					t.Fatalf("pixel %d: got %v, want %v", j/4, got, tc.want)
 				}

@@ -1,0 +1,51 @@
+name: golangci-lint
+
+# reviewdog.yml also runs golangci-lint, but as an advisory reporter at level
+# "warning": it annotates the diff and the pull request merges anyway. The two
+# roles are different -- one puts a comment next to the line under review, the
+# other refuses the merge -- so this job is added beside it rather than in place
+# of it. The findings that had collected while nothing failed the build are
+# cleared in the same change that adds this job.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  golangci-lint:
+    # This repository is two modules. The root holds the library and cmd/gina
+    # holds the CLI, each with its own go.mod, and golangci-lint reports on one
+    # module per run -- so linting only the root would leave the CLI unchecked.
+    name: golangci-lint (${{ matrix.module }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [".", "cmd/gina"]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Pinned rather than "stable": a released golangci-lint embeds the
+      # go/types of the Go it was built with, so pointing it at a newer standard
+      # library takes the linter out entirely rather than reporting on this
+      # repository's code. The newer toolchains are covered by the unit tests,
+      # which compile and run the code instead of analyzing it.
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: "1.25"
+
+      - name: Run golangci-lint as an enforced gate
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.13.2
+          working-directory: ${{ matrix.module }}

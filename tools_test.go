@@ -69,6 +69,8 @@ func TestNew(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := New(tc.w, tc.h, tc.c)
 			want := image.NewNRGBA(tc.dstBounds)
 			want.Pix = tc.dstPix
@@ -317,6 +319,8 @@ func TestClone(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := Clone(tc.src)
 			delta := 0
 			if _, ok := tc.src.(*image.YCbCr); ok {
@@ -385,6 +389,8 @@ func TestCrop(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := Crop(tc.src, tc.r)
 			if !compareNRGBA(got, tc.want, 0) {
 				t.Fatalf("got result %#v want %#v", got, tc.want)
@@ -474,6 +480,8 @@ func TestCropCenter(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := CropCenter(tc.src, tc.w, tc.h)
 			if !compareNRGBA(got, tc.want, 0) {
 				t.Fatalf("got result %#v want %#v", got, tc.want)
@@ -794,6 +802,8 @@ func TestCropAnchor(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := CropAnchor(tc.src, tc.w, tc.h, tc.anchor)
 			if !compareNRGBA(got, tc.want, 0) {
 				t.Fatalf("got result %#v want %#v", got, tc.want)
@@ -976,6 +986,8 @@ func TestPaste(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := Paste(tc.src1, tc.src2, tc.p)
 			if !compareNRGBA(got, tc.want, 0) {
 				t.Fatalf("got result %#v want %#v", got, tc.want)
@@ -1033,6 +1045,8 @@ func TestPasteCenter(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := PasteCenter(tc.src1, tc.src2)
 			if !compareNRGBA(got, tc.want, 0) {
 				t.Fatalf("got result %#v want %#v", got, tc.want)
@@ -1145,6 +1159,8 @@ func TestOverlay(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := Overlay(tc.src1, tc.src2, tc.p, tc.a)
 			if !compareNRGBA(got, tc.want, 0) {
 				t.Fatalf("got result %#v want %#v", got, tc.want)
@@ -1204,6 +1220,8 @@ func TestOverlayCenter(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := OverlayCenter(tc.src1, tc.src2, 0.5)
 			if !compareNRGBA(got, tc.want, 0) {
 				t.Fatalf("got result %#v want %#v", got, tc.want)

@@ -102,7 +102,6 @@ func Resize(img image.Image, width, height int, filter ResampleFilter) *image.NR
 		return resizeHorizontal(img, dstW, filter)
 	}
 	return resizeVertical(img, dstH, filter)
-
 }
 
 func resizeHorizontal(img image.Image, width int, filter ResampleFilter) *image.NRGBA {

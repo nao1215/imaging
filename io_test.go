@@ -85,8 +85,8 @@ func (q quantizer) Quantize(p color.Palette, m image.Image) color.Palette {
 
 // NOTE: This test contains a process that modifies global variables,
 // so it will generate errors when sub test parallelized.
-func TestOpenSave(t *testing.T) {
-	t.Run("Open and save test", func(t *testing.T) {
+func TestOpenSave(t *testing.T) { //nolint:paralleltest // see the note above
+	t.Run("Open and save test", func(t *testing.T) { //nolint:paralleltest // see the note on this test
 		imgWithoutAlpha := image.NewNRGBA(image.Rect(0, 0, 4, 6))
 		imgWithoutAlpha.Pix = []uint8{
 			0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -199,7 +199,7 @@ func TestOpenSave(t *testing.T) {
 		}
 	})
 
-	t.Run("defered close error", func(t *testing.T) {
+	t.Run("defered close error", func(t *testing.T) { //nolint:paralleltest // swaps the package-level fs
 		fs = closeErrorFS{}
 		defer func() { fs = localFS{} }()
 
@@ -266,8 +266,10 @@ func TestFormatFromExtension(t *testing.T) {
 		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			got, err := FormatFromExtension(tc.ext)
-			if err != tc.err {
+			if !errors.Is(err, tc.err) {
 				t.Errorf("got error %#v want %#v", err, tc.err)
 			}
 			if got != tc.want {

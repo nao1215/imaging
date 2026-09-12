@@ -38,7 +38,7 @@ Expected behavior.
 Any other useful data to share.
 `
 	)
-	buf.WriteString(fmt.Sprintf("## gina version\n%s\n\n", cmd.Version))
+	fmt.Fprintf(&buf, "## gina version\n%s\n\n", cmd.Version)
 	buf.WriteString(description)
 	buf.WriteString(toReproduce)
 	buf.WriteString(expectedBehavior)
@@ -47,7 +47,7 @@ Any other useful data to share.
 	body := buf.String()
 	url := "https://github.com/nao1215/imaging/issues/new?title=[Bug Report] Title&body=" + url.QueryEscape(body)
 
-	if !openBrowser(url) {
+	if !openBrowser(cmd.Context(), url) {
 		fmt.Print("Please file a new issue at https://github.com/nao1215/imaging/issues/new using this template:\n\n")
 		fmt.Print(body)
 	}

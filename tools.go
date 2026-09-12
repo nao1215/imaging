@@ -13,6 +13,10 @@ func New(width, height int, fillColor color.Color) *image.NRGBA {
 		return &image.NRGBA{}
 	}
 
+	// color.NRGBAModel converts to color.NRGBA by construction, so the assertion
+	// is total. It is left unchecked on purpose: if the standard library ever
+	// returned something else, panicking here says so, where returning a zero
+	// color would silently fill the image with transparent black.
 	c := color.NRGBAModel.Convert(fillColor).(color.NRGBA)
 	if (c == color.NRGBA{0, 0, 0, 0}) {
 		return image.NewNRGBA(image.Rect(0, 0, width, height))
