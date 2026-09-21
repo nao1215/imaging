@@ -12,12 +12,12 @@ jobs:
     strategy:
       matrix:
         # The floor go.mod declares and the newest release. The floor moved to
-        # 1.25 because golang.org/x/image 0.41.0, the first release carrying the
-        # tiff decoder security fixes this library needs, requires it. "stable"
+        # 1.26 because golang.org/x/image 0.46.0 and golang.org/x/sync 0.23.0
+        # declare it; 1.26 and 1.27 are the releases the Go team supports. "stable"
         # tracks each Go release without an edit, and is used rather than "1"
         # because setup-go resolves "1" from its own manifest, which lags a
         # fresh release.
-        go-version: ["1.25", "stable"]
+        go-version: ["1.26", "stable"]
     steps:
       - uses: actions/checkout@v7
       - name: Setup Go ${{ matrix.go-version }}
