@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/google/go-cmp v0.7.0
-	github.com/nao1215/imaging v1.0.10
+	github.com/nao1215/imaging v1.0.11
 	github.com/spf13/cobra v1.10.2
 )
 
