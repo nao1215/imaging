@@ -6,6 +6,13 @@ updates:
       interval: daily
       time: "20:00"
     open-pull-requests-limit: 10
+    # cmd/gina requires this module itself, and go.work makes that requirement
+    # visible from the root. Dependabot then asks for github.com/nao1215/imaging
+    # at a release while it is the main module, and the whole update job fails
+    # ("is in the main module, so can't request version"). gina's pin is moved
+    # by hand after each release instead.
+    ignore:
+      - dependency-name: "github.com/nao1215/imaging"
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
