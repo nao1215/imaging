@@ -231,6 +231,29 @@ Output:
 
 ![dstImage](testdata/out_example.jpg)
 
+## Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/en/reference/emoji-key/)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://debimate.jp/"><img src="https://avatars.githubusercontent.com/u/22737008?v=4?s=75" width="75px;" alt="CHIKAMATSU Naohiro"/><br /><sub><b>CHIKAMATSU Naohiro</b></sub></a><br /><a href="https://github.com/nao1215/imaging/commits?author=nao1215" title="Code">💻</a> <a href="https://github.com/nao1215/imaging/commits?author=nao1215" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/disintegration"><img src="https://avatars.githubusercontent.com/u/2706839?v=4?s=75" width="75px;" alt="Grigory Dryapak"/><br /><sub><b>Grigory Dryapak</b></sub></a><br /><a href="https://github.com/nao1215/imaging/commits?author=disintegration" title="Code">💻</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+
 ## License
 The imaging library is licensed under the [MIT License](LICENSE).
 Original author: [Disintegration](https://github.com/disintegration)
