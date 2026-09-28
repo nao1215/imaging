@@ -5,6 +5,7 @@
 [![MacUnitTest](https://github.com/nao1215/imaging/actions/workflows/mac_test.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/mac_test.yml)
 [![WindowsUnitTest](https://github.com/nao1215/imaging/actions/workflows/windows_test.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/windows_test.yml)
 [![reviewdog](https://github.com/nao1215/imaging/actions/workflows/reviewdog.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/reviewdog.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nao1215/imaging/badge)](https://scorecard.dev/viewer/?uri=github.com/nao1215/imaging)
 
 # Imaging
 **This Repository is forked from [disintegration/imaging](https://github.com/disintegration/imaging).** The reason why I forked it is that the original version has been slowly updated. This repository makes bug fixes and multi-platforming.
