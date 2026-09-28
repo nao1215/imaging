@@ -59,7 +59,3 @@ jobs:
 
       - name: Build the library
         run: go build ./...
-
-      - name: Build gina
-        run: go build ./...
-        working-directory: cmd/gina
