@@ -797,6 +797,38 @@ func TestCropAnchor(t *testing.T) {
 				Pix:    []uint8{},
 			},
 		},
+		{
+			// A negative size used to be taken as its absolute value mirrored
+			// around the anchor, so this returned a 2x2 region.
+			"CropAnchor 4x4 2x-2 Center",
+			&image.NRGBA{
+				Rect:   image.Rect(-1, -1, 3, 3),
+				Stride: 4 * 4,
+				Pix:    make([]uint8, 4*4*4),
+			},
+			2, -2,
+			Center,
+			&image.NRGBA{
+				Rect:   image.Rect(0, 0, 0, 0),
+				Stride: 0,
+				Pix:    []uint8{},
+			},
+		},
+		{
+			"CropAnchor 4x4 2x-2 Right",
+			&image.NRGBA{
+				Rect:   image.Rect(-1, -1, 3, 3),
+				Stride: 4 * 4,
+				Pix:    make([]uint8, 4*4*4),
+			},
+			2, -2,
+			Right,
+			&image.NRGBA{
+				Rect:   image.Rect(0, 0, 0, 0),
+				Stride: 0,
+				Pix:    []uint8{},
+			},
+		},
 	}
 	for _, tc := range testCases {
 		tc := tc

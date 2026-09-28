@@ -118,7 +118,13 @@ func Crop(img image.Image, rect image.Rectangle) *image.NRGBA {
 
 // CropAnchor cuts out a rectangular region with the specified size
 // from the image using the specified anchor point and returns the cropped image.
+// If width or height is not positive, an empty image is returned.
 func CropAnchor(img image.Image, width, height int, anchor Anchor) *image.NRGBA {
+	// image.Rect below swaps a negative size into a positive one, which would
+	// turn a request for nothing into a crop of the absolute size.
+	if width <= 0 || height <= 0 {
+		return &image.NRGBA{}
+	}
 	srcBounds := img.Bounds()
 	pt := anchorPt(srcBounds, width, height, anchor)
 	r := image.Rect(0, 0, width, height).Add(pt)
