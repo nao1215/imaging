@@ -78,13 +78,6 @@ linters:
       - linters:
           - forcetypeassert
         source: Model\.Convert\(
-      # gina writes one progress line per command to stdout. A write to stdout
-      # that fails has nowhere left to report it, and the exit status already
-      # carries whether the conversion worked.
-      - linters:
-          - errcheck
-        path: cmd/gina/.*\.go
-        source: fmt\.Fprintf\(os\.Stdout
     paths:
       - third_party$
       - builtin$

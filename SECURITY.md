@@ -1,9 +1,9 @@
 # Security policy
 
 ## Supported versions
-Only the latest release of imaging (and of the gina command in `cmd/gina`) gets
-fixes, including security fixes. If you hit an issue on an older version, please
-reproduce it on the latest release first.
+Only the latest release of imaging gets fixes, including security fixes. If
+you hit an issue on an older version, please reproduce it on the latest release
+first.
 
 ## Reporting a vulnerability
 Report security issues privately, not through public issues or pull requests.
@@ -19,7 +19,7 @@ reproduce:
 
 - imaging version (the version in your `go.mod`) and Go version
 - OS and architecture
-- The function or gina command you called and what happened
+- The function you called and what happened
 - A minimal reproduction, including the input image if you can share it
 
 ## What to expect

@@ -30,9 +30,6 @@ https://pkg.go.dev/github.com/nao1215/imaging
 
 A few usage examples can be found below. See the documentation for the full list of supported functions.
 
-### Sample command: gina
-As a sample implementation of the nao1215/imaging package, I have prepared the **[gina](cmd/gina/README.md)** command.
-
 ### Image resizing
 
 ```go
