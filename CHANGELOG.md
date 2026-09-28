@@ -4,6 +4,10 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+### Fixed
+
+- `CropAnchor` and `CropCenter` return an empty image for a negative width or height, as `Resize`, `Fit` and `Fill` do, instead of cropping a region of the absolute size.
+
 ### Removed
 
 - The gina command-line tool (`cmd/gina`) is removed; imaging is now a library only.
