@@ -7,6 +7,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   unit_test:
     name: Unit test (linux)
@@ -17,14 +20,19 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
 
-    steps:
-      - uses: actions/checkout@v7
+    permissions:
+      contents: read
+      actions: write
+      pull-requests: write
 
-      - uses: actions/setup-go@v7
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: "stable"
           check-latest: true
 
       - name: Run tests with coverage report output
         run: go test -cover -coverpkg=./... -coverprofile=coverage.out ./...
-      - uses: k1LoW/octocov-action@v1
+      - uses: k1LoW/octocov-action@a167dc0dee441b7ffc45e1b862ab55ec0d87f278 # v1.5.2
