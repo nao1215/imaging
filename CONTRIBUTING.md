@@ -5,7 +5,7 @@ imaging is a single Go package. It needs the Go version in `go.mod` or newer.
 
 ```shell
 make build   # go build ./...
-make test    # go test -v -cover ./..., writes cover.out and cover.html
+make test    # runs the tests with coverage, writes cover.out and cover.html
 make bench   # benchmarks
 golangci-lint run ./...
 ```
