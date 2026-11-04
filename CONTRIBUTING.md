@@ -10,7 +10,7 @@ make bench   # benchmarks
 golangci-lint run ./...
 ```
 
-There is no lint target in the Makefile. CI runs golangci-lint v2.14.0 with `.golangci.yml` as a required check, so run the same version locally before opening a pull request.
+There is no lint target in the Makefile. CI runs golangci-lint v2.15.0 with `.golangci.yml` as a required check, so run the same version locally before opening a pull request.
 
 ### Pull requests
 - When fixing a bug: Create a pull request with a test that fails without the fix.
