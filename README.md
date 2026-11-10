@@ -252,6 +252,21 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/e
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
 
+## Verifying releases
+
+Each GitHub Release carries a source archive (`imaging-<tag>.tar.gz`), `checksums.txt`, a keyless cosign signature of it (`checksums.txt.sigstore.json`) and the build provenance of the archive (`imaging-<tag>.intoto.jsonl`). Download them from the release page, then verify:
+
+```bash
+gh attestation verify imaging-v1.0.12.tar.gz --repo nao1215/imaging
+
+cosign verify-blob --bundle checksums.txt.sigstore.json \
+  --certificate-identity-regexp '^https://github.com/nao1215/imaging/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  checksums.txt
+
+sha256sum --check checksums.txt
+```
+
 ## License
 The imaging library is licensed under the [MIT License](LICENSE).
 Original author: [Disintegration](https://github.com/disintegration)
