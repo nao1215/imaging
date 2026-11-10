@@ -1,0 +1,68 @@
+name: Release
+
+# Releases are created by hand (the release skill runs `gh release create`).
+# When one is published, this workflow attaches a source archive, its checksums,
+# a keyless cosign signature of the checksums and the build provenance of the
+# archive to it, so that the OpenSSF Scorecard Signed-Releases check finds them.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  sign:
+    name: Sign the release assets
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # upload assets to the existing release
+      id-token: write # keyless cosign signing and provenance (OIDC)
+      attestations: write # publish build provenance
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+
+      - name: Build the source archive and checksums
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          git archive --format=tar.gz --prefix="imaging-${TAG_NAME}/" -o "dist/imaging-${TAG_NAME}.tar.gz" "$TAG_NAME"
+          cd dist
+          sha256sum "imaging-${TAG_NAME}.tar.gz" > checksums.txt
+
+      - name: Attest build provenance
+        id: attest
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/imaging-${{ github.event.release.tag_name }}.tar.gz
+
+      - name: Sign the checksums
+        run: cosign sign-blob --yes --bundle dist/checksums.txt.sigstore.json dist/checksums.txt
+
+      - name: Upload the signed assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
+          BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
+        run: |
+          set -euo pipefail
+          jq -c . < "$BUNDLE_PATH" > "dist/imaging-${TAG_NAME}.intoto.jsonl"
+          gh release upload "$TAG_NAME" \
+            "dist/imaging-${TAG_NAME}.tar.gz" \
+            dist/checksums.txt \
+            dist/checksums.txt.sigstore.json \
+            "dist/imaging-${TAG_NAME}.intoto.jsonl" \
+            --clobber
