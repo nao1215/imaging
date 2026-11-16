@@ -5,6 +5,8 @@
 [![MacUnitTest](https://github.com/nao1215/imaging/actions/workflows/mac_test.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/mac_test.yml)
 [![WindowsUnitTest](https://github.com/nao1215/imaging/actions/workflows/windows_test.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/windows_test.yml)
 [![reviewdog](https://github.com/nao1215/imaging/actions/workflows/reviewdog.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/reviewdog.yml)
+[![Gosec](https://github.com/nao1215/imaging/actions/workflows/gosec.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/gosec.yml)
+[![Trivy](https://github.com/nao1215/imaging/actions/workflows/trivy.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/trivy.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nao1215/imaging/badge)](https://scorecard.dev/viewer/?uri=github.com/nao1215/imaging)
 
 # Imaging
