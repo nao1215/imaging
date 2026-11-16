@@ -146,9 +146,9 @@ func (s *scanner) scanRGBA(img *image.RGBA, x1, y1, x2, y2 int, dst []uint8) {
 				g16 := uint16(s[1])
 				b16 := uint16(s[2])
 				a16 := uint16(a)
-				d[0] = uint8(r16 * 0xff / a16)
-				d[1] = uint8(g16 * 0xff / a16)
-				d[2] = uint8(b16 * 0xff / a16)
+				d[0] = uint8(r16 * 0xff / a16) // #nosec G115 -- premultiplied color is at most alpha, so the quotient fits a byte
+				d[1] = uint8(g16 * 0xff / a16) // #nosec G115 -- premultiplied color is at most alpha, so the quotient fits a byte
+				d[2] = uint8(b16 * 0xff / a16) // #nosec G115 -- premultiplied color is at most alpha, so the quotient fits a byte
 				d[3] = a
 			}
 			j += 4
@@ -180,9 +180,9 @@ func (s *scanner) scanRGBA64(img *image.RGBA64, x1, y1, x2, y2 int, dst []uint8)
 				g32 := uint32(s[2])<<8 | uint32(s[3])
 				b32 := uint32(s[4])<<8 | uint32(s[5])
 				a32 := uint32(s[6])<<8 | uint32(s[7])
-				d[0] = uint8((r32 * 0xffff / a32) >> 8)
-				d[1] = uint8((g32 * 0xffff / a32) >> 8)
-				d[2] = uint8((b32 * 0xffff / a32) >> 8)
+				d[0] = uint8((r32 * 0xffff / a32) >> 8) // #nosec G115 -- premultiplied color is at most alpha, so the quotient fits a byte
+				d[1] = uint8((g32 * 0xffff / a32) >> 8) // #nosec G115 -- premultiplied color is at most alpha, so the quotient fits a byte
+				d[2] = uint8((b32 * 0xffff / a32) >> 8) // #nosec G115 -- premultiplied color is at most alpha, so the quotient fits a byte
 			}
 			d[3] = a
 			j += 4
@@ -265,30 +265,30 @@ func (s *scanner) scanYCbCr(img *image.YCbCr, x1, y1, x2, y2 int, dst []uint8) {
 			cr1 := int32(img.Cr[ic]) - 128
 
 			r := yy1 + 91881*cr1
-			if uint32(r)&0xff000000 == 0 {
+			if uint32(r)&0xff000000 == 0 { // #nosec G115 -- the sign-bit test of color.YCbCrToRGB
 				r >>= 16
 			} else {
 				r = ^(r >> 31)
 			}
 
 			g := yy1 - 22554*cb1 - 46802*cr1
-			if uint32(g)&0xff000000 == 0 {
+			if uint32(g)&0xff000000 == 0 { // #nosec G115 -- the sign-bit test of color.YCbCrToRGB
 				g >>= 16
 			} else {
 				g = ^(g >> 31)
 			}
 
 			b := yy1 + 116130*cb1
-			if uint32(b)&0xff000000 == 0 {
+			if uint32(b)&0xff000000 == 0 { // #nosec G115 -- the sign-bit test of color.YCbCrToRGB
 				b >>= 16
 			} else {
 				b = ^(b >> 31)
 			}
 
 			d := dst[j : j+4 : j+4]
-			d[0] = uint8(r)
-			d[1] = uint8(g)
-			d[2] = uint8(b)
+			d[0] = uint8(r) // #nosec G115 -- r was clamped to 0..255 above
+			d[1] = uint8(g) // #nosec G115 -- g was clamped to 0..255 above
+			d[2] = uint8(b) // #nosec G115 -- b was clamped to 0..255 above
 			d[3] = 0xff
 
 			iy++
@@ -329,9 +329,9 @@ func (s *scanner) scanDefault(x1, y1, x2, y2 int, dst []uint8) {
 			d := dst[j : j+4 : j+4]
 			switch a16 {
 			case 0xffff:
-				d[0] = uint8(r16 >> 8)
-				d[1] = uint8(g16 >> 8)
-				d[2] = uint8(b16 >> 8)
+				d[0] = uint8(r16 >> 8) // #nosec G115 -- a 16-bit channel shifted right by 8 fits a byte
+				d[1] = uint8(g16 >> 8) // #nosec G115 -- a 16-bit channel shifted right by 8 fits a byte
+				d[2] = uint8(b16 >> 8) // #nosec G115 -- a 16-bit channel shifted right by 8 fits a byte
 				d[3] = 0xff
 			case 0:
 				d[0] = 0
@@ -339,10 +339,10 @@ func (s *scanner) scanDefault(x1, y1, x2, y2 int, dst []uint8) {
 				d[2] = 0
 				d[3] = 0
 			default:
-				d[0] = uint8(((r16 * 0xffff) / a16) >> 8)
-				d[1] = uint8(((g16 * 0xffff) / a16) >> 8)
-				d[2] = uint8(((b16 * 0xffff) / a16) >> 8)
-				d[3] = uint8(a16 >> 8)
+				d[0] = uint8(((r16 * 0xffff) / a16) >> 8) // #nosec G115 -- premultiplied color is at most alpha, so the quotient is at most 0xffff
+				d[1] = uint8(((g16 * 0xffff) / a16) >> 8) // #nosec G115 -- premultiplied color is at most alpha, so the quotient is at most 0xffff
+				d[2] = uint8(((b16 * 0xffff) / a16) >> 8) // #nosec G115 -- premultiplied color is at most alpha, so the quotient is at most 0xffff
+				d[3] = uint8(a16 >> 8)                    // #nosec G115 -- a 16-bit channel shifted right by 8 fits a byte
 			}
 			j += 4
 		}
