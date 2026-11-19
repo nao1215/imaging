@@ -232,7 +232,14 @@ func TestMetamorphic_GeometryKeepsTheHistogram(t *testing.T) {
 
 // TestMetamorphic_ResizeCommutesWithFlips checks that resampling treats both
 // directions alike: every filter is symmetric, so flipping an image before
-// resizing it gives the flip of the resized image, up to one level of rounding.
+// resizing it gives the flip of the resized image, up to two levels of rounding.
+//
+// Two, not one, because Resize changes both sides in two passes with a byte
+// image between them. The mirrored weights agree only to the last bit (0.3 and
+// 0.29999999999999998 for 2 to 6 wide), so a value landing exactly on a half,
+// 0.3*215 = 64.5, rounds to 65 one way and 64 the other in the first pass, and
+// the second pass carries that level through a filter whose weights reach 1.1
+// before rounding again.
 //
 // NearestNeighbor and Box are left out. Both jump at the edge of their support:
 // nearest neighbor picks one pixel rather than weighing several, and a sample
@@ -255,7 +262,7 @@ func TestMetamorphic_ResizeCommutesWithFlips(t *testing.T) {
 		f := rapid.SampledFrom(filters).Draw(t, "filter")
 		w := rapid.IntRange(1, 12).Draw(t, "width")
 		h := rapid.IntRange(1, 12).Draw(t, "height")
-		const tolerance = 1
+		const tolerance = 2
 		resize := func(x image.Image) *image.NRGBA { return Resize(x, w, h, f.filter) }
 		requireSame(t, "Resize(FlipH(x)) vs FlipH(Resize(x)), "+f.name, resize(FlipH(img)), FlipH(resize(img)), tolerance)
 		requireSame(t, "Resize(FlipV(x)) vs FlipV(Resize(x)), "+f.name, resize(FlipV(img)), FlipV(resize(img)), tolerance)
