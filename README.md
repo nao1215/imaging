@@ -237,6 +237,19 @@ Output:
 
 ![dstImage](testdata/out_example.jpg)
 
+## Testing
+
+| Technique | Bug class caught here |
+|---|---|
+| Examples and unit tests ([example_test.go](example_test.go), [tools_test.go](tools_test.go)) | A function that no longer gives the pixels its tests spell out |
+| Golden images ([resize_test.go](resize_test.go), [adjust_test.go](adjust_test.go), [effects_test.go](effects_test.go)) | A filter or adjustment whose output drifts from the reviewed image in `testdata/` |
+| Metamorphic tests ([metamorphic_test.go](metamorphic_test.go)) | A result that changes with the image's origin or storage type, a flip or rotation that does not undo, or a resize that treats the two directions differently |
+| Differential tests ([metamorphic_test.go](metamorphic_test.go), [scanner_test.go](scanner_test.go)) | A paste that disagrees with `image/draw`, or a fast path that reads another color than the image's own `At` |
+| Fuzzing ([fuzz_test.go](fuzz_test.go)) | A crash or a wrong size on a malformed file, size, rectangle or angle |
+| Mutation testing ([.github/workflows/mutation.yml](.github/workflows/mutation.yml)) | A test that runs a changed comparison or bound without noticing the change |
+
+How to run each one is in [doc/testing.md](doc/testing.md).
+
 ## Contributors ✨
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/en/reference/emoji-key/)):
