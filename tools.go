@@ -230,6 +230,15 @@ func Overlay(background, img image.Image, pos image.Point, opacity float64) *ima
 				coef2 := opacity * a2 / 255
 				coef1 := (1 - coef2) * a1 / 255
 				coefSum := coef1 + coef2
+				if coefSum == 0 {
+					// Neither layer has any alpha here, so the blend has
+					// nothing to weigh and the background pixel stays as it
+					// is. Dividing would make the weights NaN, and converting
+					// NaN to a byte is implementation-defined.
+					i += 4
+					j += 4
+					continue
+				}
 				coef1 /= coefSum
 				coef2 /= coefSum
 
