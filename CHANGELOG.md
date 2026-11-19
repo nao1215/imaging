@@ -9,7 +9,7 @@ All notable changes to this project are documented in this file. The format is b
 - CI scans the repository with gosec and Trivy on every pull request (Trivy covers dependency vulnerabilities, committed secrets and misconfigurations, and also runs daily). Workflow actions are recorded in `.github/workflows/actions.lock`, which CI verifies against the pinned commits.
 - Releases now attach a source archive, `checksums.txt`, a keyless cosign signature of the checksums and the build provenance of the archive to the GitHub Release. See "Verifying releases" in the README.
 - Dependencies updated: `golang.org/x/image` 0.48.0 and `golang.org/x/sync` 0.25.0. The Go minimum stays at 1.26.
-- CI scans the commits of pull requests and of pushes to main for committed secrets with gitleaks and moves govulncheck to v1.10.0. A new push to a pull request cancels the run it supersedes.
+- CI scans the commits of pull requests and of pushes to main for committed secrets with gitleaks (Dependabot pull requests are skipped: they only change version numbers, and their read-only token cannot list the commits) and moves govulncheck to v1.10.0. A new push to a pull request cancels the run it supersedes.
 
 ## [1.0.12] - 2026-09-28
 
