@@ -1,15 +1,21 @@
-![GitHub](https://img.shields.io/github/license/nao1215/imaging?style=flat-square)
-[![Go Reference](https://pkg.go.dev/badge/github.com/nao1215/imaging.svg)](https://pkg.go.dev/github.com/nao1215/imaging)
-![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/nao1215/imaging/coverage.svg)
+# Imaging
+
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 [![LinuxUnitTest](https://github.com/nao1215/imaging/actions/workflows/linux_test.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/linux_test.yml)
 [![MacUnitTest](https://github.com/nao1215/imaging/actions/workflows/mac_test.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/mac_test.yml)
 [![WindowsUnitTest](https://github.com/nao1215/imaging/actions/workflows/windows_test.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/windows_test.yml)
-[![reviewdog](https://github.com/nao1215/imaging/actions/workflows/reviewdog.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/reviewdog.yml)
-[![Gosec](https://github.com/nao1215/imaging/actions/workflows/gosec.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/gosec.yml)
+![Coverage](https://raw.githubusercontent.com/nao1215/octocovs-central-repo/main/badges/nao1215/imaging/coverage.svg)
+[![Gitleaks](https://github.com/nao1215/imaging/actions/workflows/gitleaks.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/gitleaks.yml)
 [![Trivy](https://github.com/nao1215/imaging/actions/workflows/trivy.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/trivy.yml)
+[![govulncheck](https://github.com/nao1215/imaging/actions/workflows/govulncheck.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/govulncheck.yml)
+[![Gosec](https://github.com/nao1215/imaging/actions/workflows/gosec.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/gosec.yml)
+[![reviewdog](https://github.com/nao1215/imaging/actions/workflows/reviewdog.yml/badge.svg)](https://github.com/nao1215/imaging/actions/workflows/reviewdog.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/nao1215/imaging.svg)](https://pkg.go.dev/github.com/nao1215/imaging)
+[![License](https://img.shields.io/github/license/nao1215/imaging)](./LICENSE)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nao1215/imaging/badge)](https://scorecard.dev/viewer/?uri=github.com/nao1215/imaging)
 
-# Imaging
 **This Repository is forked from [disintegration/imaging](https://github.com/disintegration/imaging).** The reason why I forked it is that the original version has been slowly updated. This repository makes bug fixes and multi-platforming.
 
 Package imaging provides basic image processing functions (resize, rotate, crop, brightness/contrast adjustments, etc.).
