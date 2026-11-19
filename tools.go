@@ -139,6 +139,7 @@ func CropCenter(img image.Image, width, height int) *image.NRGBA {
 }
 
 // Paste pastes the img image to the background image at the specified position and returns the combined image.
+// The combined image has the background's size: the part of img that falls outside the background is cut off.
 func Paste(background, img image.Image, pos image.Point) *image.NRGBA {
 	dst := Clone(background)
 	pos = pos.Sub(background.Bounds().Min)
@@ -147,10 +148,9 @@ func Paste(background, img image.Image, pos image.Point) *image.NRGBA {
 	if interRect.Empty() {
 		return dst
 	}
-	if interRect.Eq(dst.Bounds()) {
-		return Clone(img)
-	}
 
+	// No shortcut for an image covering all of the background: returning it
+	// whole would hand back an image of its own size, not the background's.
 	src := newScanner(img)
 	parallel(interRect.Min.Y, interRect.Max.Y, func(ys <-chan int) {
 		for y := range ys {
