@@ -4,6 +4,8 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [1.0.13] - 2026-11-19
+
 ### Fixed
 
 - `Paste` and `PasteCenter` return an image of the background's size when the pasted image covers all of the background. They returned the pasted image whole, at its own larger size.
@@ -15,6 +17,7 @@ All notable changes to this project are documented in this file. The format is b
 - Releases now attach a source archive, `checksums.txt`, a keyless cosign signature of the checksums and the build provenance of the archive to the GitHub Release. See "Verifying releases" in the README.
 - Dependencies updated: `golang.org/x/image` 0.48.0 and `golang.org/x/sync` 0.25.0. The Go minimum stays at 1.26.
 - CI scans the commits of pull requests and of pushes to main for committed secrets with gitleaks (Dependabot pull requests are skipped: they only change version numbers, and their read-only token cannot list the commits) and moves govulncheck to v1.10.0. A new push to a pull request cancels the run it supersedes.
+- Metamorphic and differential tests (with rapid) check the orientations, the independence of every operation from the image's origin and storage type, resizing against flips, `Paste` against `image/draw` and `Overlay` at its ends, and draw 20,000 inputs per test every night. Mutation testing with gremlins runs on the lines a pull request changes and on the whole package weekly; `doc/testing.md` records the first score and how to run each technique.
 
 ## [1.0.12] - 2026-09-28
 
