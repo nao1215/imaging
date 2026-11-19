@@ -17,7 +17,7 @@ An image operation rarely has an expected output that is easy to write down, but
 - The eight orientations form a group: each flip and rotation is undone by its inverse, `Rotate180` is `FlipV` after `FlipH`, `Transpose` is `Rotate90` after `FlipH`, and `Rotate` by a right angle, a whole turn either way, is the matching quarter-turn function.
 - An operation that reads one pixel at a time (`Grayscale`, `Invert`, the adjustments) gives the same image whether the image is reoriented before or after it, and reorienting keeps the histogram.
 - Every operation gives the same result for an image whose bounds start away from (0, 0) as for the same pixels at the origin, and the same result for opaque pixels stored as `*image.RGBA` as for `*image.NRGBA`.
-- Resizing with a filter that goes to zero at its edge commutes with flips, up to a level of rounding. `NearestNeighbor` and `Box` jump at their edge, so a sample point lying exactly on it can go either way after a flip; they are left out.
+- Resizing with a filter that goes to zero at its edge commutes with flips, up to two levels of rounding: the two passes of `Resize` round to a byte in between, and a value exactly on a half can round the other way after a flip. `NearestNeighbor` and `Box` jump at their edge, so a sample point lying exactly on it can go either way after a flip; they are left out.
 - Resizing or blurring an image of one color gives that color back.
 - `Paste` keeps the background's size and gives back the pasted image when the pasted area is cropped out again; `Overlay` at opacity 0 returns the background, and at opacity 1 with an opaque image it is `Paste`.
 - An image written as PNG reads back as the same pixels.
