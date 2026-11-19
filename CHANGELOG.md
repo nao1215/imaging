@@ -7,6 +7,7 @@ All notable changes to this project are documented in this file. The format is b
 ### Fixed
 
 - `Paste` and `PasteCenter` return an image of the background's size when the pasted image covers all of the background. They returned the pasted image whole, at its own larger size.
+- `Overlay` and `OverlayCenter` leave a background pixel as it is where neither layer has any alpha: a transparent background under a transparent pixel, or under any pixel at opacity 0. The blend weights were 0/0 there, and the NaN converted to a byte wiped the color the background pixel carried (to 0 on amd64; the conversion is implementation-defined).
 
 ### Changed
 

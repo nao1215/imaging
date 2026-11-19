@@ -1262,6 +1262,57 @@ func TestOverlay(t *testing.T) {
 				},
 			},
 		},
+		{
+			// Where neither layer has any alpha to weigh by -- a transparent
+			// background under a transparent pixel, or under any pixel at
+			// opacity 0 -- the blend weights are 0/0. Converting that NaN to a
+			// byte is implementation-defined in Go, and amd64 gave 0, which
+			// wiped the color the background pixel carried.
+			"Overlay 2x1 2x1 over transparent background pixels",
+			&image.NRGBA{
+				Rect:   image.Rect(0, 0, 2, 1),
+				Stride: 2 * 4,
+				Pix: []uint8{
+					0x10, 0x20, 0x30, 0x00, 0x40, 0x50, 0x60, 0x00,
+				},
+			},
+			&image.NRGBA{
+				Rect:   image.Rect(0, 0, 2, 1),
+				Stride: 2 * 4,
+				Pix: []uint8{
+					0xaa, 0xbb, 0xcc, 0x00, 0x00, 0x00, 0x00, 0x00,
+				},
+			},
+			image.Pt(0, 0),
+			1.0,
+			&image.NRGBA{
+				Rect:   image.Rect(0, 0, 2, 1),
+				Stride: 2 * 4,
+				Pix: []uint8{
+					0x10, 0x20, 0x30, 0x00, 0x40, 0x50, 0x60, 0x00,
+				},
+			},
+		},
+		{
+			"Overlay 1x1 1x1 at opacity 0 over a transparent background pixel",
+			&image.NRGBA{
+				Rect:   image.Rect(0, 0, 1, 1),
+				Stride: 1 * 4,
+				Pix:    []uint8{0x10, 0x20, 0x30, 0x00},
+			},
+			&image.NRGBA{
+				Rect:   image.Rect(0, 0, 1, 1),
+				Stride: 1 * 4,
+				Pix:    []uint8{0xaa, 0xbb, 0xcc, 0xff},
+			},
+			image.Pt(0, 0),
+			0,
+			&image.NRGBA{
+				Rect:   image.Rect(0, 0, 1, 1),
+				Stride: 1 * 4,
+				Pix:    []uint8{0x10, 0x20, 0x30, 0x00},
+			},
+		},
 	}
 	for _, tc := range testCases {
 		tc := tc
