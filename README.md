@@ -16,161 +16,15 @@
 [![License](https://img.shields.io/github/license/nao1215/imaging)](./LICENSE)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/nao1215/imaging/badge)](https://scorecard.dev/viewer/?uri=github.com/nao1215/imaging)
 
-**This Repository is forked from [disintegration/imaging](https://github.com/disintegration/imaging).** The reason why I forked it is that the original version has been slowly updated. This repository makes bug fixes and multi-platforming.
+Imaging is a Go package for basic image processing: resizing, rotation, cropping, blurring, sharpening, and brightness, contrast, gamma, saturation and hue adjustments. It is a fork of [disintegration/imaging](https://github.com/disintegration/imaging), which is updated slowly; this fork adds bug fixes and tests on Linux, macOS and Windows.
 
-Package imaging provides basic image processing functions (resize, rotate, crop, brightness/contrast adjustments, etc.).
+Every function accepts any `image.Image` and returns a new `*image.NRGBA` (32-bit RGBA, non-premultiplied alpha). The full API is documented at https://pkg.go.dev/github.com/nao1215/imaging.
 
-All the image processing functions provided by the package accept any image type that implements `image.Image` interface
-as an input, and return a new image of `*image.NRGBA` type (32bit RGBA colors, non-premultiplied alpha).
+## Supported platforms
 
-## Support OS / Go version
-The following platforms and go versions have been unit tested.
-- Linux
-- Mac
-- Windows
-- Go 1.26 or later
+Unit tests run on Linux, macOS and Windows with Go 1.26 or later.
 
-## Documentation
-
-https://pkg.go.dev/github.com/nao1215/imaging
-
-## Usage examples
-
-A few usage examples can be found below. See the documentation for the full list of supported functions.
-
-### Image resizing
-
-```go
-// Resize srcImage to size = 128x128px using the Lanczos filter.
-dstImage128 := imaging.Resize(srcImage, 128, 128, imaging.Lanczos)
-
-// Resize srcImage to width = 800px preserving the aspect ratio.
-dstImage800 := imaging.Resize(srcImage, 800, 0, imaging.Lanczos)
-
-// Scale down srcImage to fit the 800x600px bounding box.
-dstImageFit := imaging.Fit(srcImage, 800, 600, imaging.Lanczos)
-
-// Resize and crop the srcImage to fill the 100x100px area.
-dstImageFill := imaging.Fill(srcImage, 100, 100, imaging.Center, imaging.Lanczos)
-```
-
-Imaging supports image resizing using various resampling filters. The most notable ones:
-- `Lanczos` - A high-quality resampling filter for photographic images yielding sharp results.
-- `CatmullRom` - A sharp cubic filter that is faster than Lanczos filter while providing similar results.
-- `MitchellNetravali` - A cubic filter that produces smoother results with less ringing artifacts than CatmullRom.
-- `Linear` - Bilinear resampling filter, produces smooth output. Faster than cubic filters.
-- `Box` - Simple and fast averaging filter appropriate for downscaling. When upscaling it's similar to NearestNeighbor.
-- `NearestNeighbor` - Fastest resampling filter, no antialiasing.
-
-The full list of supported filters:  NearestNeighbor, Box, Linear, Hermite, MitchellNetravali, CatmullRom, BSpline, Gaussian, Lanczos, Hann, Hamming, Blackman, Bartlett, Welch, Cosine. Custom filters can be created using ResampleFilter struct.
-
-**Resampling filters comparison**
-
-Original image:
-
-![srcImage](testdata/branches.png)
-
-The same image resized from 600x400px to 150x100px using different resampling filters.
-From faster (lower quality) to slower (higher quality):
-
-Filter                    | Resize result
---------------------------|---------------------------------------------
-`imaging.NearestNeighbor` | ![dstImage](testdata/out_resize_nearest.png)
-`imaging.Linear`          | ![dstImage](testdata/out_resize_linear.png)
-`imaging.CatmullRom`      | ![dstImage](testdata/out_resize_catrom.png)
-`imaging.Lanczos`         | ![dstImage](testdata/out_resize_lanczos.png)
-
-
-### Gaussian Blur
-
-```go
-dstImage := imaging.Blur(srcImage, 0.5)
-```
-
-Sigma parameter allows to control the strength of the blurring effect.
-
-Original image                     | Sigma = 0.5                            | Sigma = 1.5
------------------------------------|----------------------------------------|---------------------------------------
-![srcImage](testdata/flowers_small.png) | ![dstImage](testdata/out_blur_0.5.png) | ![dstImage](testdata/out_blur_1.5.png)
-
-### Sharpening
-
-```go
-dstImage := imaging.Sharpen(srcImage, 0.5)
-```
-
-`Sharpen` uses gaussian function internally. Sigma parameter allows to control the strength of the sharpening effect.
-
-Original image                     | Sigma = 0.5                               | Sigma = 1.5
------------------------------------|-------------------------------------------|------------------------------------------
-![srcImage](testdata/flowers_small.png) | ![dstImage](testdata/out_sharpen_0.5.png) | ![dstImage](testdata/out_sharpen_1.5.png)
-
-### Gamma correction
-
-```go
-dstImage := imaging.AdjustGamma(srcImage, 0.75)
-```
-
-Original image                     | Gamma = 0.75                             | Gamma = 1.25
------------------------------------|------------------------------------------|-----------------------------------------
-![srcImage](testdata/flowers_small.png) | ![dstImage](testdata/out_gamma_0.75.png) | ![dstImage](testdata/out_gamma_1.25.png)
-
-### Contrast adjustment
-
-```go
-dstImage := imaging.AdjustContrast(srcImage, 20)
-```
-
-Original image                     | Contrast = 15                              | Contrast = -15
------------------------------------|--------------------------------------------|-------------------------------------------
-![srcImage](testdata/flowers_small.png) | ![dstImage](testdata/out_contrast_p15.png) | ![dstImage](testdata/out_contrast_m15.png)
-
-### Brightness adjustment
-
-```go
-dstImage := imaging.AdjustBrightness(srcImage, 20)
-```
-
-Original image                     | Brightness = 10                              | Brightness = -10
------------------------------------|----------------------------------------------|---------------------------------------------
-![srcImage](testdata/flowers_small.png) | ![dstImage](testdata/out_brightness_p10.png) | ![dstImage](testdata/out_brightness_m10.png)
-
-### Saturation adjustment
-
-```go
-dstImage := imaging.AdjustSaturation(srcImage, 20)
-```
-
-Original image                     | Saturation = 30                              | Saturation = -30
------------------------------------|----------------------------------------------|---------------------------------------------
-![srcImage](testdata/flowers_small.png) | ![dstImage](testdata/out_saturation_p30.png) | ![dstImage](testdata/out_saturation_m30.png)
-
-### Hue adjustment
-
-```go
-dstImage := imaging.AdjustHue(srcImage, 20)
-```
-
-Original image                     | Hue = 60                                     | Hue = -60
------------------------------------|----------------------------------------------|---------------------------------------------
-![srcImage](testdata/flowers_small.png) | ![dstImage](testdata/out_hue_p60.png) | ![dstImage](testdata/out_hue_m60.png)
-
-## FAQ
-
-### Incorrect image orientation after processing (e.g. an image appears rotated after resizing)
-
-Most probably, the given image contains the EXIF orientation tag.
-The standard `image/*` packages do not support loading and saving
-this kind of information. To fix the issue, try opening images with
-the `AutoOrientation` decode option. If this option is set to `true`,
-the image orientation is changed after decoding, according to the
-orientation tag (if present). Here's the example:
-
-```go
-img, err := imaging.Open("test.jpg", imaging.AutoOrientation(true))
-```
-
-## Example code
+## Example
 
 ```go
 package main
@@ -237,6 +91,103 @@ Output:
 
 ![dstImage](testdata/out_example.jpg)
 
+## Resizing
+
+```go
+// Resize srcImage to size = 128x128px using the Lanczos filter.
+dstImage128 := imaging.Resize(srcImage, 128, 128, imaging.Lanczos)
+
+// Resize srcImage to width = 800px preserving the aspect ratio.
+dstImage800 := imaging.Resize(srcImage, 800, 0, imaging.Lanczos)
+
+// Scale down srcImage to fit the 800x600px bounding box.
+dstImageFit := imaging.Fit(srcImage, 800, 600, imaging.Lanczos)
+
+// Resize and crop the srcImage to fill the 100x100px area.
+dstImageFill := imaging.Fill(srcImage, 100, 100, imaging.Center, imaging.Lanczos)
+```
+
+The most commonly used resampling filters:
+
+- `Lanczos`: sharp results on photographs.
+- `CatmullRom`: a sharp cubic filter, faster than Lanczos with similar results.
+- `MitchellNetravali`: a cubic filter with smoother results and less ringing than CatmullRom.
+- `Linear`: bilinear, smooth output, faster than the cubic filters.
+- `Box`: a fast averaging filter for downscaling; when upscaling it is close to NearestNeighbor.
+- `NearestNeighbor`: the fastest, with no antialiasing.
+
+All supported filters: NearestNeighbor, Box, Linear, Hermite, MitchellNetravali, CatmullRom, BSpline, Gaussian, Lanczos, Hann, Hamming, Blackman, Bartlett, Welch, Cosine. You can define your own with the ResampleFilter struct.
+
+The original 600x400px image:
+
+![srcImage](testdata/branches.png)
+
+Resized to 150x100px, from the fastest filter to the highest quality:
+
+Filter                    | Resize result
+--------------------------|---------------------------------------------
+`imaging.NearestNeighbor` | ![dstImage](testdata/out_resize_nearest.png)
+`imaging.Linear`          | ![dstImage](testdata/out_resize_linear.png)
+`imaging.CatmullRom`      | ![dstImage](testdata/out_resize_catrom.png)
+`imaging.Lanczos`         | ![dstImage](testdata/out_resize_lanczos.png)
+
+## Blur and sharpen
+
+```go
+dstImage := imaging.Blur(srcImage, 0.5)
+```
+
+```go
+dstImage := imaging.Sharpen(srcImage, 0.5)
+```
+
+Sigma sets the strength of both effects (`Sharpen` also uses a gaussian function).
+
+Function | Original image | Sigma = 0.5 | Sigma = 1.5
+---------|----------------|-------------|------------
+`Blur` | ![srcImage](testdata/flowers_small.png) | ![dstImage](testdata/out_blur_0.5.png) | ![dstImage](testdata/out_blur_1.5.png)
+`Sharpen` | ![srcImage](testdata/flowers_small.png) | ![dstImage](testdata/out_sharpen_0.5.png) | ![dstImage](testdata/out_sharpen_1.5.png)
+
+## Color adjustments
+
+```go
+dstImage := imaging.AdjustGamma(srcImage, 0.75)
+```
+
+```go
+dstImage := imaging.AdjustContrast(srcImage, 20)
+```
+
+```go
+dstImage := imaging.AdjustBrightness(srcImage, 20)
+```
+
+```go
+dstImage := imaging.AdjustSaturation(srcImage, 20)
+```
+
+```go
+dstImage := imaging.AdjustHue(srcImage, 20)
+```
+
+Function | Original image | Result | Result
+---------|----------------|--------|-------
+`AdjustGamma` | ![srcImage](testdata/flowers_small.png) | Gamma = 0.75<br>![dstImage](testdata/out_gamma_0.75.png) | Gamma = 1.25<br>![dstImage](testdata/out_gamma_1.25.png)
+`AdjustContrast` | ![srcImage](testdata/flowers_small.png) | Contrast = 15<br>![dstImage](testdata/out_contrast_p15.png) | Contrast = -15<br>![dstImage](testdata/out_contrast_m15.png)
+`AdjustBrightness` | ![srcImage](testdata/flowers_small.png) | Brightness = 10<br>![dstImage](testdata/out_brightness_p10.png) | Brightness = -10<br>![dstImage](testdata/out_brightness_m10.png)
+`AdjustSaturation` | ![srcImage](testdata/flowers_small.png) | Saturation = 30<br>![dstImage](testdata/out_saturation_p30.png) | Saturation = -30<br>![dstImage](testdata/out_saturation_m30.png)
+`AdjustHue` | ![srcImage](testdata/flowers_small.png) | Hue = 60<br>![dstImage](testdata/out_hue_p60.png) | Hue = -60<br>![dstImage](testdata/out_hue_m60.png)
+
+## FAQ
+
+### The image is rotated after processing
+
+The file probably has an EXIF orientation tag, which the standard `image/*` packages ignore. Open it with the `AutoOrientation` decode option, and the image is rotated according to the tag (if present) after decoding:
+
+```go
+img, err := imaging.Open("test.jpg", imaging.AutoOrientation(true))
+```
+
 ## Testing
 
 | Technique | Bug class caught here |
@@ -290,5 +241,5 @@ sha256sum --check checksums.txt
 ```
 
 ## License
-The imaging library is licensed under the [MIT License](LICENSE).
-Original author: [Disintegration](https://github.com/disintegration)
+
+MIT License. See [LICENSE](LICENSE). Original author: [Disintegration](https://github.com/disintegration).
