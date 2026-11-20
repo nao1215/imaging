@@ -18,7 +18,7 @@
 
 Imaging is a Go package for basic image processing: resizing, rotation, cropping, blurring, sharpening, and brightness, contrast, gamma, saturation and hue adjustments. It is a fork of [disintegration/imaging](https://github.com/disintegration/imaging), which is updated slowly; this fork adds bug fixes and tests on Linux, macOS and Windows.
 
-Every function accepts any `image.Image` and returns a new `*image.NRGBA` (32-bit RGBA, non-premultiplied alpha). The full API is documented at https://pkg.go.dev/github.com/nao1215/imaging.
+Every image processing function accepts any `image.Image` and returns a new `*image.NRGBA` (32-bit RGBA, non-premultiplied alpha). The full API is documented at https://pkg.go.dev/github.com/nao1215/imaging.
 
 ## Supported platforms
 
