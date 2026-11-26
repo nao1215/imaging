@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"math"
 	"testing"
 )
 
@@ -159,7 +160,7 @@ func FuzzMalformedImage(f *testing.F) {
 	f.Add(uint8(7), int8(0), int8(0), uint8(255), uint8(147), 288, 288*147, 144, 144*147/2)
 	f.Add(uint8(7), int8(3), int8(3), uint8(5), uint8(5), 5, 25, 3, 5)
 	f.Add(uint8(6), int8(1), int8(1), uint8(4), uint8(4), -4, 16, 0, 0)
-	f.Add(uint8(2), int8(-2), int8(5), uint8(3), uint8(3), 1<<40, 3, 0, 0)
+	f.Add(uint8(2), int8(-2), int8(5), uint8(3), uint8(3), math.MaxInt, 3, 0, 0)
 
 	f.Fuzz(func(t *testing.T, kind uint8, minX, minY int8, w, h uint8, stride, n, cstride, cn int) {
 		rect := image.Rect(int(minX), int(minY), int(minX)+int(w%64), int(minY)+int(h%64))
@@ -213,4 +214,36 @@ func FuzzMalformedImage(f *testing.F) {
 		_ = Histogram(img)
 		_ = Paste(New(8, 8, color.White), img, image.Pt(-1, 2))
 	})
+}
+
+// TestYCbCrShort covers each way the planes of a YCbCr can fall short.
+func TestYCbCrShort(t *testing.T) {
+	t.Parallel()
+
+	well := func() *image.YCbCr {
+		return image.NewYCbCr(image.Rect(0, 0, 5, 5), image.YCbCrSubsampleRatio420)
+	}
+	testCases := []struct {
+		name  string
+		edit  func(*image.YCbCr)
+		short bool
+	}{
+		{"well formed", func(*image.YCbCr) {}, false},
+		{"empty bounds", func(m *image.YCbCr) { m.Rect = image.Rect(0, 0, 0, 5); m.Y = nil }, false},
+		{"luma a byte short", func(m *image.YCbCr) { m.Y = m.Y[:len(m.Y)-1] }, true},
+		{"negative chroma stride", func(m *image.YCbCr) { m.CStride = -m.CStride }, true},
+		{"blue chroma a byte short", func(m *image.YCbCr) { m.Cb = m.Cb[:len(m.Cb)-1] }, true},
+		{"red chroma a byte short", func(m *image.YCbCr) { m.Cr = m.Cr[:len(m.Cr)-1] }, true},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			m := well()
+			tc.edit(m)
+			if got := ycbcrShort(m); got != tc.short {
+				t.Fatalf("ycbcrShort = %v, want %v", got, tc.short)
+			}
+			_ = Clone(m)
+		})
+	}
 }
