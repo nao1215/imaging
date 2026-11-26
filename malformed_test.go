@@ -345,30 +345,6 @@ func TestYCbCrHugeChromaStride(t *testing.T) {
 	_ = Clone(img)
 }
 
-// TestWithoutSpareCapacity checks that each concrete type comes back with its
-// buffers' capacity cut to their length, and any other image as it was.
-func TestWithoutSpareCapacity(t *testing.T) {
-	t.Parallel()
-
-	for name, img := range scannerTestImages(image.Rect(0, 0, 3, 2)) {
-		clipped := withoutSpareCapacity(img)
-		switch m := clipped.(type) {
-		case *image.YCbCr:
-			if cap(m.Y) != len(m.Y) || cap(m.Cb) != len(m.Cb) || cap(m.Cr) != len(m.Cr) {
-				t.Fatalf("%s: spare capacity left", name)
-			}
-		case *image.Alpha:
-			if clipped != img {
-				t.Fatalf("%s: a type the scanner does not read directly was copied", name)
-			}
-		default:
-			if clipped == img && name != "Generic" {
-				t.Fatalf("%s: not copied", name)
-			}
-		}
-	}
-}
-
 // TestScannerLongPalette is a palette of more than the 256 colors a pixel byte
 // can index: the entries past 255 are unreachable and ignored.
 func TestScannerLongPalette(t *testing.T) {
@@ -382,5 +358,75 @@ func TestScannerLongPalette(t *testing.T) {
 	img.Pix[0] = 255
 	if got := Clone(img).NRGBAAt(0, 0); got != (color.NRGBA{255, 0, 0, 255}) {
 		t.Fatalf("got %v", got)
+	}
+}
+
+// TestHugeStrideRowsReadAsMissing checks the pixels, not just the absence of a
+// panic, of images whose stride is so large that the offset of row 4 wraps to
+// 0 on a 64-bit int: the image's own At would read the first pixel's bytes
+// there. Only row 0 is in the buffers; rows 1 to 4 must be transparent.
+func TestHugeStrideRowsReadAsMissing(t *testing.T) {
+	t.Parallel()
+
+	huge := math.MaxInt/2 + 1 // 4*huge is 2^64 (2^32 on 386): it wraps to exactly 0
+	red := color.NRGBA{255, 0, 0, 255}
+	images := map[string]image.Image{
+		"NRGBA": &image.NRGBA{Pix: []uint8{255, 0, 0, 255}, Stride: huge, Rect: image.Rect(0, 0, 1, 5)},
+		"YCbCr chroma": &image.YCbCr{
+			Y: []uint8{82, 82, 82, 82, 82}, Cb: []uint8{90}, Cr: []uint8{240},
+			YStride: 1, CStride: huge, SubsampleRatio: image.YCbCrSubsampleRatio444,
+			Rect: image.Rect(0, 0, 1, 5),
+		},
+		"YCbCr luma": &image.YCbCr{
+			Y: []uint8{82}, Cb: []uint8{90, 90, 90, 90, 90}, Cr: []uint8{240, 240, 240, 240, 240},
+			YStride: huge, CStride: 1, SubsampleRatio: image.YCbCrSubsampleRatio444,
+			Rect: image.Rect(0, 0, 1, 5),
+		},
+	}
+	for name, img := range images {
+		got := Clone(img)
+		if first := got.NRGBAAt(0, 0); first.A != 255 || (name == "NRGBA" && first != red) {
+			t.Fatalf("%s: row 0 is %v, want the held pixel", name, first)
+		}
+		for y := 1; y < 5; y++ {
+			if c := got.NRGBAAt(0, y); c != (color.NRGBA{}) {
+				t.Fatalf("%s: row %d is %v, want transparent", name, y, c)
+			}
+		}
+	}
+}
+
+// TestSpanHeld pins the bounds of the per-pixel check.
+func TestSpanHeld(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name                 string
+		n, stride, r, c, bpp int
+		want                 bool
+	}{
+		{"first pixel", 4, 8, 0, 0, 4, true},
+		{"last byte of the buffer", 12, 8, 1, 0, 4, true},
+		{"a byte past the buffer", 11, 8, 1, 0, 4, false},
+		{"last column of row 0", 8, 8, 0, 1, 4, true},
+		{"column past the buffer", 8, 8, 0, 2, 4, false},
+		{"negative row", 100, 8, -1, 0, 4, false},
+		{"negative column", 100, 8, 0, -1, 4, false},
+		{"zero stride, any row", 4, 0, 1000, 0, 4, true},
+		{"negative stride", 100, -8, 1, 0, 4, false},
+		{"stride that would wrap", 4, math.MaxInt/2 + 1, 4, 0, 4, false},
+	}
+	// A type the scanner does not read directly is never short, and holds
+	// leaves it to the image.
+	if !holds(image.NewAlpha(image.Rect(0, 0, 1, 1)), 0, 0) {
+		t.Fatal("holds(*image.Alpha) = false")
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := spanHeld(tc.n, tc.stride, tc.r, tc.c, tc.bpp); got != tc.want {
+				t.Fatalf("spanHeld(%d, %d, %d, %d, %d) = %v, want %v", tc.n, tc.stride, tc.r, tc.c, tc.bpp, got, tc.want)
+			}
+		})
 	}
 }

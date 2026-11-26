@@ -72,67 +72,75 @@ func ycbcrShort(m *image.YCbCr) bool {
 	// The rows and columns of samples the bounds reach are checked with
 	// bufferCovers, whose arithmetic cannot overflow: computing the offset of
 	// the last sample can, and a wrapped offset looks like one in range.
-	xdiv, ydiv := 1, 1
-	switch m.SubsampleRatio {
-	case image.YCbCrSubsampleRatio422:
-		xdiv = 2
-	case image.YCbCrSubsampleRatio420:
-		xdiv, ydiv = 2, 2
-	case image.YCbCrSubsampleRatio440:
-		ydiv = 2
-	case image.YCbCrSubsampleRatio411:
-		xdiv = 4
-	case image.YCbCrSubsampleRatio410:
-		xdiv, ydiv = 4, 2
-	default: // 444, and any other ratio COffset treats as 444
-	}
+	xdiv, ydiv := chromaDivisors(m.SubsampleRatio)
 	cw := (r.Max.X-1)/xdiv - r.Min.X/xdiv + 1
 	ch := (r.Max.Y-1)/ydiv - r.Min.Y/ydiv + 1
 	return !bufferCovers(len(m.Cb), m.CStride, cw, ch, 1) || !bufferCovers(len(m.Cr), m.CStride, cw, ch, 1)
 }
 
-// withoutSpareCapacity returns a shallow copy of a short image whose buffers
-// have no capacity past their length. The image types' own At methods slice a
-// pixel up to the capacity, so with spare capacity they would read a pixel the
-// buffer does not hold instead of panicking, and scanShort would not see that
-// the pixel is missing.
-func withoutSpareCapacity(img image.Image) image.Image {
-	clip := func(b []uint8) []uint8 { return b[:len(b):len(b)] }
+// chromaDivisors returns how many pixels across and down share one chroma
+// sample under ratio, as image.YCbCr.COffset counts them.
+func chromaDivisors(ratio image.YCbCrSubsampleRatio) (xdiv, ydiv int) {
+	switch ratio {
+	case image.YCbCrSubsampleRatio422:
+		return 2, 1
+	case image.YCbCrSubsampleRatio420:
+		return 2, 2
+	case image.YCbCrSubsampleRatio440:
+		return 1, 2
+	case image.YCbCrSubsampleRatio411:
+		return 4, 1
+	case image.YCbCrSubsampleRatio410:
+		return 4, 2
+	default: // 444, and any other ratio COffset treats as 444
+		return 1, 1
+	}
+}
+
+// spanHeld reports whether the bpp bytes of the pixel in row r and column c of
+// a buffer of length n, read with the given stride, all lie inside it. It never
+// computes the pixel's offset, which can overflow and wrap around to an offset
+// that is in range, and so read another pixel's bytes in its place.
+func spanHeld(n, stride, r, c, bpp int) bool {
+	if r < 0 || c < 0 || c >= n/bpp {
+		return false
+	}
+	if r == 0 {
+		return true
+	}
+	if stride <= 0 {
+		return stride == 0 // every row is row 0; a negative stride runs off the front
+	}
+	return r <= (n-(c+1)*bpp)/stride
+}
+
+// holds reports whether the buffers of a short image hold the pixel at (x, y),
+// which lies inside its bounds.
+func holds(img image.Image, x, y int) bool {
+	b := img.Bounds()
+	r, c := y-b.Min.Y, x-b.Min.X
 	switch m := img.(type) {
 	case *image.NRGBA:
-		c := *m
-		c.Pix = clip(c.Pix)
-		return &c
+		return spanHeld(len(m.Pix), m.Stride, r, c, 4)
 	case *image.NRGBA64:
-		c := *m
-		c.Pix = clip(c.Pix)
-		return &c
+		return spanHeld(len(m.Pix), m.Stride, r, c, 8)
 	case *image.RGBA:
-		c := *m
-		c.Pix = clip(c.Pix)
-		return &c
+		return spanHeld(len(m.Pix), m.Stride, r, c, 4)
 	case *image.RGBA64:
-		c := *m
-		c.Pix = clip(c.Pix)
-		return &c
+		return spanHeld(len(m.Pix), m.Stride, r, c, 8)
 	case *image.Gray:
-		c := *m
-		c.Pix = clip(c.Pix)
-		return &c
+		return spanHeld(len(m.Pix), m.Stride, r, c, 1)
 	case *image.Gray16:
-		c := *m
-		c.Pix = clip(c.Pix)
-		return &c
+		return spanHeld(len(m.Pix), m.Stride, r, c, 2)
 	case *image.Paletted:
-		c := *m
-		c.Pix = clip(c.Pix)
-		return &c
+		return spanHeld(len(m.Pix), m.Stride, r, c, 1)
 	case *image.YCbCr:
-		c := *m
-		c.Y, c.Cb, c.Cr = clip(c.Y), clip(c.Cb), clip(c.Cr)
-		return &c
+		xdiv, ydiv := chromaDivisors(m.SubsampleRatio)
+		cr, cc := y/ydiv-b.Min.Y/ydiv, x/xdiv-b.Min.X/xdiv
+		return spanHeld(len(m.Y), m.YStride, r, c, 1) &&
+			spanHeld(len(m.Cb), m.CStride, cr, cc, 1) && spanHeld(len(m.Cr), m.CStride, cr, cc, 1)
 	}
-	return img
+	return true
 }
 
 // paletteSize is the number of entries scanner.palette always holds. A pixel of
@@ -155,9 +163,6 @@ func newScanner(img image.Image) *scanner {
 		w:     img.Bounds().Dx(),
 		h:     img.Bounds().Dy(),
 		short: isShort(img),
-	}
-	if s.short {
-		s.image = withoutSpareCapacity(img)
 	}
 	if palImg, ok := img.(*image.Paletted); ok {
 		s.palette = make([]color.NRGBA, paletteSize)
@@ -491,9 +496,10 @@ func (s *scanner) scanDefault(x1, y1, x2, y2 int, dst []uint8) {
 // scanShort scans an image whose buffers end before its bounds do. It asks the
 // image for each pixel, as scanDefault does, and reads a pixel the buffers do
 // not hold as transparent: the same answer newScanner gives for a palette
-// index the palette does not define. Such a pixel has no correct color, and
-// the alternative, the index out of range the image's own At raises, would end
-// the process from inside a worker goroutine.
+// index the palette does not define. Such a pixel has no correct color; the
+// image's own At would panic on it from inside a worker goroutine, or, where
+// its offset overflows or the buffer has spare capacity, return another
+// pixel's bytes.
 func (s *scanner) scanShort(x1, y1, x2, y2 int, dst []uint8) {
 	j := 0
 	b := s.image.Bounds()
@@ -507,21 +513,17 @@ func (s *scanner) scanShort(x1, y1, x2, y2 int, dst []uint8) {
 	}
 }
 
-// shortAt returns the color at (x, y), or transparent where the image cannot
-// produce one.
-func (s *scanner) shortAt(x, y int) (c color.NRGBA) {
-	if p, ok := s.image.(*image.Paletted); ok {
-		i := p.PixOffset(x, y)
-		if i < 0 || i >= len(p.Pix) {
-			return color.NRGBA{}
-		}
-		return s.palette[p.Pix[i]]
+// shortAt returns the color at (x, y), or transparent where the image's
+// buffers do not hold that pixel. Once holds has said yes, the pixel's offset
+// is inside a buffer, so neither the image's At nor the palette lookup can
+// overflow, panic or read past a buffer's length into its capacity.
+func (s *scanner) shortAt(x, y int) color.NRGBA {
+	if !holds(s.image, x, y) {
+		return color.NRGBA{}
 	}
-	defer func() {
-		if recover() != nil {
-			c = color.NRGBA{}
-		}
-	}()
+	if p, ok := s.image.(*image.Paletted); ok {
+		return s.palette[p.Pix[p.PixOffset(x, y)]]
+	}
 	return color.NRGBAModel.Convert(s.image.At(x, y)).(color.NRGBA)
 }
 
