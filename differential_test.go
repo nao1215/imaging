@@ -1,7 +1,9 @@
 package imaging
 
 import (
+	"fmt"
 	"image"
+	"image/draw"
 	"testing"
 
 	"pgregory.net/rapid"
@@ -215,5 +217,27 @@ func TestDifferential_ClampSaturatingMatchesClamp(t *testing.T) {
 		if a, b := clamp(x), clampSaturating(x); a != b {
 			t.Fatalf("x=%v: clamp %d, clampSaturating %d", x, a, b)
 		}
+	})
+}
+
+// TestDifferential_OverlayMatchesDrawOver compares Overlay at opacity 1 with
+// image/draw's draw.Over, the Porter-Duff "over" that upstream issue
+// disintegration/imaging#164 expected of Paste. Paste replaces the pixels it
+// covers, transparent ones included; Overlay is the function that composites.
+// draw.Over works on 16-bit premultiplied color and Overlay on 8-bit
+// unpremultiplied color, so they may differ by a level of rounding.
+func TestDifferential_OverlayMatchesDrawOver(t *testing.T) {
+	t.Parallel()
+	rapid.Check(t, func(t *rapid.T) {
+		bg := genNRGBA(t, "bg")
+		img := genNRGBA(t, "img")
+		b := bg.Bounds()
+		pos := image.Pt(
+			rapid.IntRange(b.Min.X-img.Bounds().Dx(), b.Max.X).Draw(t, "x"),
+			rapid.IntRange(b.Min.Y-img.Bounds().Dy(), b.Max.Y).Draw(t, "y"),
+		)
+		want := atOrigin(bg)
+		draw.Draw(want, image.Rectangle{Min: pos, Max: pos.Add(img.Bounds().Size())}.Sub(b.Min), img, img.Bounds().Min, draw.Over)
+		requireSame(t, fmt.Sprintf("Overlay at %v vs draw.Over", pos), Overlay(bg, img, pos, 1), want, 1)
 	})
 }

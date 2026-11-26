@@ -140,6 +140,12 @@ func CropCenter(img image.Image, width, height int) *image.NRGBA {
 
 // Paste pastes the img image to the background image at the specified position and returns the combined image.
 // The combined image has the background's size: the part of img that falls outside the background is cut off.
+//
+// Paste replaces the pixels it covers, transparent ones included, so a fully
+// transparent pixel of img (the corners Rotate fills with color.Transparent,
+// for example) is transparent in the result, and black once saved as JPEG. To
+// draw img over the background, compositing by its alpha as image/draw's
+// draw.Over does, use Overlay with an opacity of 1.
 func Paste(background, img image.Image, pos image.Point) *image.NRGBA {
 	dst := Clone(background)
 	pos = pos.Sub(background.Bounds().Min)
