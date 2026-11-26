@@ -247,6 +247,7 @@ Output:
 | Differential tests ([metamorphic_test.go](metamorphic_test.go), [scanner_test.go](scanner_test.go), [differential_test.go](differential_test.go)) | A paste that disagrees with `image/draw`, a fast path that reads another color than the image's own `At`, or a faster resize or blur pass that disagrees with the pass it replaced |
 | Fuzzing ([fuzz_test.go](fuzz_test.go), [malformed_test.go](malformed_test.go)) | A crash or a wrong size on a malformed file, size, rectangle, angle, or image whose buffers do not match its bounds |
 | Mutation testing ([.github/workflows/mutation.yml](.github/workflows/mutation.yml)) | A test that runs a changed comparison or bound without noticing the change |
+| Paired benchmarks ([scripts/ci_benchmark.py](scripts/ci_benchmark.py)) | A pull request that makes an operation consistently slower than on main |
 
 How to run each one is in [doc/testing.md](doc/testing.md).
 
@@ -256,24 +257,24 @@ A 1920x1280 JPEG (decoded as `*image.YCbCr`, or converted to `*image.NRGBA`), me
 
 | Operation | disintegration/imaging | nao1215/imaging | Change |
 |---|---:|---:|---:|
-| `Resize` to 640 px, `Lanczos`, NRGBA | 7.77 ms | 6.32 ms | -18.7% |
-| `Resize` to 640 px, `Lanczos`, YCbCr | 9.10 ms | 7.65 ms | -16.0% |
-| `Resize` to 640 px, `Linear`, NRGBA | 3.10 ms | 2.91 ms | -5.9% |
-| `Resize` to 640 px, `NearestNeighbor`, NRGBA | 0.270 ms | 0.118 ms | -56.3% |
-| `Fill` 300x300, `Lanczos` | 5.34 ms | 4.38 ms | -18.0% |
-| `Thumbnail` 150x150, `CatmullRom`, YCbCr | 3.92 ms | 3.50 ms | -10.7% |
-| `Blur` sigma 3 | 29.1 ms | 27.2 ms | -6.7% |
-| `Sharpen` sigma 1 | 16.8 ms | 16.2 ms | -3.9% |
-| `Grayscale`, YCbCr | 2.55 ms | 2.57 ms | ~ |
-| `AdjustContrast` | 0.914 ms | 0.912 ms | ~ |
-| `AdjustSaturation` | 13.5 ms | 13.4 ms | ~ |
-| `Rotate90` | 1.01 ms | 0.990 ms | ~ |
+| `Resize` to 640 px, `Lanczos`, NRGBA | 7.83 ms | 6.62 ms | -15.5% |
+| `Resize` to 640 px, `Lanczos`, YCbCr | 9.19 ms | 7.99 ms | -13.1% |
+| `Resize` to 640 px, `Linear`, NRGBA | 3.14 ms | 3.00 ms | -4.3% |
+| `Resize` to 640 px, `NearestNeighbor`, NRGBA | 0.268 ms | 0.116 ms | -56.8% |
+| `Fill` 300x300, `Lanczos` | 5.40 ms | 4.63 ms | -14.4% |
+| `Thumbnail` 150x150, `CatmullRom`, YCbCr | 3.97 ms | 3.66 ms | -7.9% |
+| `Blur` sigma 3 | 29.7 ms | 27.1 ms | -8.5% |
+| `Sharpen` sigma 1 | 17.0 ms | 16.1 ms | -5.3% |
+| `Convolve3x3` | 9.19 ms | 8.49 ms | -7.7% |
+| `Grayscale`, YCbCr | 2.55 ms | 2.55 ms | ~ |
+| `AdjustContrast` | 0.912 ms | 0.910 ms | ~ |
+| `AdjustSaturation` | 13.6 ms | 13.6 ms | ~ |
+| `Rotate90` | 0.999 ms | 1.01 ms | ~ |
 | `Rotate` 30 degrees | 13.5 ms | 13.5 ms | ~ |
-| `Convolve3x3` | 9.12 ms | 8.91 ms | ~ |
-| `Histogram` | 1.03 ms | 1.03 ms | ~ |
-| `Paste` 200 px image | 0.435 ms | 0.431 ms | ~ |
-| `Overlay` 200 px image | 0.472 ms | 0.465 ms | ~ |
-| `Clone`, YCbCr | 1.71 ms | 1.71 ms | ~ |
+| `Histogram` | 1.03 ms | 1.05 ms | +1.1% |
+| `Paste` 200 px image | 0.429 ms | 0.432 ms | ~ |
+| `Overlay` 200 px image | 0.479 ms | 0.480 ms | ~ |
+| `Clone`, YCbCr | 1.69 ms | 1.70 ms | ~ |
 
 ## Contributors ✨
 
