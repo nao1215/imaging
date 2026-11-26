@@ -117,13 +117,17 @@ func newScanner(img image.Image) *scanner {
 
 // scan scans the given rectangular region of the image into dst.
 func (s *scanner) scan(x1, y1, x2, y2 int, dst []uint8) {
-	// An empty row reads nothing. The fast paths below would still slice the
-	// buffer at the row's offset, which lies past the end of the empty buffer
-	// of an image with no columns but a stride. (No rows needs no check: the
-	// loops over y do not start.)
-	if x1 >= x2 {
+	// An empty region reads nothing. The fast paths below would still slice
+	// the buffer at the row's offset, which lies past the end of the empty
+	// buffer of an image with no columns but a stride.
+	if x1 >= x2 || y1 >= y2 {
 		return
 	}
+	// dst must hold the whole region. The paths below write it four bytes at a
+	// time through three-index slices, which Go allows up to the capacity, so a
+	// caller passing a slice too short would have it silently written past its
+	// end instead of panicking. Indexing the last byte makes that a panic.
+	_ = dst[(x2-x1)*(y2-y1)*4-1]
 	if s.short {
 		s.scanShort(x1, y1, x2, y2, dst)
 		return

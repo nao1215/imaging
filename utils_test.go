@@ -365,3 +365,28 @@ func TestHSLToRGB(t *testing.T) {
 		})
 	}
 }
+
+// TestParallelRange checks that parallel hands out exactly the indexes from
+// start up to stop, once each, when start is not zero.
+func TestParallelRange(t *testing.T) {
+	t.Parallel()
+
+	for _, r := range [][2]int{{5, 10}, {-3, 4}, {7, 8}, {9, 9}, {9, 3}} {
+		var seen [32]atomic.Int32
+		parallel(r[0], r[1], func(is <-chan int) {
+			for i := range is {
+				seen[i+16].Add(1)
+			}
+		})
+		for j := range seen {
+			i := j - 16
+			want := int32(0)
+			if i >= r[0] && i < r[1] {
+				want = 1
+			}
+			if got := seen[j].Load(); got != want {
+				t.Fatalf("parallel(%d, %d): index %d seen %d times, want %d", r[0], r[1], i, got, want)
+			}
+		}
+	}
+}

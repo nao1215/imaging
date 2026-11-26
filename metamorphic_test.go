@@ -355,3 +355,43 @@ func TestMetamorphic_PNGRoundTrip(t *testing.T) {
 		requireSame(t, "Decode(Encode(x, PNG))", Clone(got), Clone(img), 0)
 	})
 }
+
+// TestMetamorphic_CenteredImageHasEvenMargins checks PasteCenter and
+// OverlayCenter by where the pasted image lands: an opaque white image on an
+// opaque black background, whose white box must have the image's size and
+// margins that differ by at most a pixel on either axis.
+func TestMetamorphic_CenteredImageHasEvenMargins(t *testing.T) {
+	t.Parallel()
+	rapid.Check(t, func(t *rapid.T) {
+		bw := rapid.IntRange(1, 12).Draw(t, "bw")
+		bh := rapid.IntRange(1, 12).Draw(t, "bh")
+		iw := rapid.IntRange(1, bw).Draw(t, "iw")
+		ih := rapid.IntRange(1, bh).Draw(t, "ih")
+		x0 := rapid.IntRange(-3, 3).Draw(t, "x0")
+		y0 := rapid.IntRange(-3, 3).Draw(t, "y0")
+		bg := &image.NRGBA{Pix: New(bw, bh, color.NRGBA{0, 0, 0, 255}).Pix, Stride: bw * 4, Rect: image.Rect(x0, y0, x0+bw, y0+bh)}
+		img := New(iw, ih, color.NRGBA{255, 255, 255, 255})
+
+		for name, got := range map[string]*image.NRGBA{
+			"PasteCenter":   PasteCenter(bg, img),
+			"OverlayCenter": OverlayCenter(bg, img, 1),
+		} {
+			box := image.Rectangle{}
+			for y := 0; y < bh; y++ {
+				for x := 0; x < bw; x++ {
+					if got.NRGBAAt(x, y).R == 255 {
+						box = box.Union(image.Rect(x, y, x+1, y+1))
+					}
+				}
+			}
+			if box.Size() != image.Pt(iw, ih) {
+				t.Fatalf("%s: white box %v, want size %dx%d", name, box, iw, ih)
+			}
+			left, right := box.Min.X, bw-box.Max.X
+			top, bottom := box.Min.Y, bh-box.Max.Y
+			if absInt(left-right) > 1 || absInt(top-bottom) > 1 {
+				t.Fatalf("%s: margins left %d right %d top %d bottom %d", name, left, right, top, bottom)
+			}
+		}
+	})
+}
