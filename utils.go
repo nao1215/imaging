@@ -39,14 +39,30 @@ func parallel(start, stop int, fn func(<-chan int)) {
 	}
 	close(c)
 
+	// A panic in a worker would end the process: no caller can recover a
+	// panic raised in a goroutine it did not start. The first one is kept and
+	// raised again in the calling goroutine once every worker has returned.
+	var (
+		panicOnce sync.Once
+		panicked  bool
+		panicVal  any
+	)
 	wg.Add(procs)
 	for i := 0; i < procs; i++ {
 		go func() {
 			defer wg.Done()
+			defer func() {
+				if r := recover(); r != nil {
+					panicOnce.Do(func() { panicked, panicVal = true, r })
+				}
+			}()
 			fn(c)
 		}()
 	}
 	wg.Wait()
+	if panicked {
+		panic(panicVal)
+	}
 }
 
 // absInt returns the absolute value of i.
@@ -90,7 +106,7 @@ func reverse(pix []uint8) {
 
 // toNRGBA convert image.Image to *image.NRGBA.
 func toNRGBA(img image.Image) *image.NRGBA {
-	if img, ok := img.(*image.NRGBA); ok {
+	if img, ok := img.(*image.NRGBA); ok && bufferCovers(len(img.Pix), img.Stride, img.Rect.Dx(), img.Rect.Dy(), 4) {
 		return &image.NRGBA{
 			Pix:    img.Pix,
 			Stride: img.Stride,

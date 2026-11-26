@@ -13,6 +13,67 @@ type scanner struct {
 	w, h int
 	// palette is the palette of the image, if any
 	palette []color.NRGBA
+	// short reports that the image is one of the concrete types scan reads
+	// directly but its buffers end before its bounds do, so scan has to check
+	// every read.
+	short bool
+}
+
+// bufferCovers reports whether a buffer of length n, read row by row with the
+// given stride, holds h rows of w pixels of bpp bytes each, the first pixel at
+// offset 0. It is written with divisions so that no product can overflow.
+func bufferCovers(n, stride, w, h, bpp int) bool {
+	if w <= 0 || h <= 0 {
+		return true
+	}
+	if stride < 0 || w > n/bpp {
+		return false
+	}
+	last := n - w*bpp // the offset the last row may start at
+	return stride == 0 || h-1 <= last/stride
+}
+
+// isShort reports whether img is a concrete type scan reads directly whose
+// buffers do not hold every pixel of its bounds.
+func isShort(img image.Image) bool {
+	switch m := img.(type) {
+	case *image.NRGBA:
+		return !bufferCovers(len(m.Pix), m.Stride, m.Rect.Dx(), m.Rect.Dy(), 4)
+	case *image.NRGBA64:
+		return !bufferCovers(len(m.Pix), m.Stride, m.Rect.Dx(), m.Rect.Dy(), 8)
+	case *image.RGBA:
+		return !bufferCovers(len(m.Pix), m.Stride, m.Rect.Dx(), m.Rect.Dy(), 4)
+	case *image.RGBA64:
+		return !bufferCovers(len(m.Pix), m.Stride, m.Rect.Dx(), m.Rect.Dy(), 8)
+	case *image.Gray:
+		return !bufferCovers(len(m.Pix), m.Stride, m.Rect.Dx(), m.Rect.Dy(), 1)
+	case *image.Gray16:
+		return !bufferCovers(len(m.Pix), m.Stride, m.Rect.Dx(), m.Rect.Dy(), 2)
+	case *image.Paletted:
+		return !bufferCovers(len(m.Pix), m.Stride, m.Rect.Dx(), m.Rect.Dy(), 1)
+	case *image.YCbCr:
+		return ycbcrShort(m)
+	}
+	return false
+}
+
+// ycbcrShort reports whether the luma or chroma planes of img end before its
+// bounds do.
+func ycbcrShort(m *image.YCbCr) bool {
+	r := m.Rect
+	if r.Empty() {
+		return false
+	}
+	if !bufferCovers(len(m.Y), m.YStride, r.Dx(), r.Dy(), 1) {
+		return true
+	}
+	if m.CStride < 0 {
+		return true
+	}
+	// The chroma offset grows with x and with y, so the planes hold every
+	// sample when they hold the first and the last.
+	first, last := m.COffset(r.Min.X, r.Min.Y), m.COffset(r.Max.X-1, r.Max.Y-1)
+	return first < 0 || last >= len(m.Cb) || last >= len(m.Cr)
 }
 
 // paletteSize is the number of entries scanner.palette always holds. A pixel of
@@ -34,6 +95,7 @@ func newScanner(img image.Image) *scanner {
 		image: img,
 		w:     img.Bounds().Dx(),
 		h:     img.Bounds().Dy(),
+		short: isShort(img),
 	}
 	if palImg, ok := img.(*image.Paletted); ok {
 		s.palette = make([]color.NRGBA, paletteSize)
@@ -55,6 +117,16 @@ func newScanner(img image.Image) *scanner {
 
 // scan scans the given rectangular region of the image into dst.
 func (s *scanner) scan(x1, y1, x2, y2 int, dst []uint8) {
+	// An empty region reads nothing. The fast paths below would still slice
+	// the buffer at the row's offset, which lies past the end of the empty
+	// buffer of an image with no columns but a stride.
+	if x1 >= x2 || y1 >= y2 {
+		return
+	}
+	if s.short {
+		s.scanShort(x1, y1, x2, y2, dst)
+		return
+	}
 	switch img := s.image.(type) {
 	case *image.NRGBA:
 		s.scanNRGBA(img, x1, y1, x2, y2, dst)
@@ -347,4 +419,41 @@ func (s *scanner) scanDefault(x1, y1, x2, y2 int, dst []uint8) {
 			j += 4
 		}
 	}
+}
+
+// scanShort scans an image whose buffers end before its bounds do. It asks the
+// image for each pixel, as scanDefault does, and reads a pixel the buffers do
+// not hold as transparent: the same answer newScanner gives for a palette
+// index the palette does not define. Such a pixel has no correct colour, and
+// the alternative, the index out of range the image's own At raises, would end
+// the process from inside a worker goroutine.
+func (s *scanner) scanShort(x1, y1, x2, y2 int, dst []uint8) {
+	j := 0
+	b := s.image.Bounds()
+	for y := y1 + b.Min.Y; y < y2+b.Min.Y; y++ {
+		for x := x1 + b.Min.X; x < x2+b.Min.X; x++ {
+			c := s.shortAt(x, y)
+			d := dst[j : j+4 : j+4]
+			d[0], d[1], d[2], d[3] = c.R, c.G, c.B, c.A
+			j += 4
+		}
+	}
+}
+
+// shortAt returns the colour at (x, y), or transparent where the image cannot
+// produce one.
+func (s *scanner) shortAt(x, y int) (c color.NRGBA) {
+	if p, ok := s.image.(*image.Paletted); ok {
+		i := p.PixOffset(x, y)
+		if i < 0 || i >= len(p.Pix) {
+			return color.NRGBA{}
+		}
+		return s.palette[p.Pix[i]]
+	}
+	defer func() {
+		if recover() != nil {
+			c = color.NRGBA{}
+		}
+	}()
+	return color.NRGBAModel.Convert(s.image.At(x, y)).(color.NRGBA)
 }

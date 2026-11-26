@@ -4,6 +4,16 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+### Fixed
+
+- Every function accepts an `*image.NRGBA`, `*image.NRGBA64`, `*image.RGBA`, `*image.RGBA64`, `*image.Gray`, `*image.Gray16`, `*image.Paletted` or `*image.YCbCr` whose buffers end before its bounds do, such as the 4:2:0 YCbCr of upstream issue disintegration/imaging#159 whose chroma planes are a row short for an odd height. A pixel the buffers do not hold reads as transparent, as a palette index the palette does not define already did. Such an image panicked with an index out of range inside a worker goroutine and ended the process.
+- An image with no columns but a non-zero stride no longer panics: the scanner sliced its empty buffer at the offset of the second row.
+- A panic raised while processing an image, for example by the `At` method of a caller's own image type, is raised again in the goroutine that called the function, where it can be recovered. It was raised in a worker goroutine and ended the process.
+
+### Changed
+
+- `FuzzMalformedImage` builds every concrete image type from arbitrary bounds, strides and buffer lengths and runs the operations over it.
+
 ## [1.0.13] - 2026-11-19
 
 ### Fixed
