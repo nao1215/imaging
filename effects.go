@@ -121,7 +121,7 @@ func blurVertical(img image.Image, kernel []float64) *image.NRGBA {
 	return dst
 }
 
-// premultiplyRow converts NRGBA bytes to floats with each colour channel
+// premultiplyRow converts NRGBA bytes to floats with each color channel
 // multiplied by the pixel's alpha. The products are integers below 2^16, so
 // they are exact, and a filter tap needs one multiplication per channel.
 func premultiplyRow(dst []float64, src []uint8) {

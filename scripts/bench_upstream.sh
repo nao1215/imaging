@@ -6,7 +6,7 @@
 # The two implementations run in turn, one process per round, so that a change
 # in the machine's load or clock during the run lands on both sides alike. Set
 # CPUS to pin the runs to some cores (for example CPUS=8-11) and GOMAXPROCS to
-# the number of them. The results are written to bench-results/ and summarised
+# the number of them. The results are written to bench-results/ and summarized
 # with benchstat, which the script runs through `go run`.
 set -eu
 

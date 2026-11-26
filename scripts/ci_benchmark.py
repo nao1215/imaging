@@ -9,7 +9,7 @@ A benchmark fails the gate only when it is slower on both counts:
 - the median of the head's samples is more than --max-ratio times the base's;
 - even the head's fastest sample is slower than the base's median.
 
-The second condition keeps one slow sample, or a noisy neighbour on a shared
+The second condition keeps one slow sample, or a noisy neighbor on a shared
 runner, from failing a pull request that did not change the code it measures.
 """
 import argparse
@@ -98,8 +98,12 @@ def main(argv=None):
                                                'max_ratio': args.max_ratio, 'rows': rows}, indent=2) + '\n')
     summary = subprocess.run(['go', 'run', BENCHSTAT, str(out / 'base.txt'), str(out / 'head.txt')],
                              cwd=ROOT, capture_output=True, text=True)
-    (out / 'benchstat.txt').write_text(summary.stdout)
+    (out / 'benchstat.txt').write_text(summary.stdout + summary.stderr)
     print(summary.stdout)
+    if summary.returncode != 0:
+        # The gate below works on the raw samples and still decides; only the
+        # human-readable summary is missing, and the log should say why.
+        print(f'::warning::benchstat exited with {summary.returncode}: {summary.stderr.strip()}')
 
     regressed = [row for row in rows if row['regressed']]
     for row in regressed:

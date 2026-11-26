@@ -10,11 +10,11 @@ import (
 )
 
 // The resampling and blurring passes were rewritten for speed: the vertical
-// resize adds whole rows instead of walking columns, the nearest-neighbour
+// resize adds whole rows instead of walking columns, the nearest-neighbor
 // downscale copies from an NRGBA source directly, and the horizontal resize and
 // both blur passes premultiply a line by its alpha once instead of at every tap.
 // The functions below are the passes as they were before, kept as the oracle.
-// The vertical resize and the nearest-neighbour downscale must agree with them
+// The vertical resize and the nearest-neighbor downscale must agree with them
 // bit for bit; the premultiplied passes round the product a·c·w in another
 // order, so they may differ from them by a level of rounding.
 

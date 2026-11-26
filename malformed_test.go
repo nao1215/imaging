@@ -19,22 +19,22 @@ func shortBufferImages(rect image.Rectangle) map[string]image.Image {
 	for name, img := range images {
 		switch m := img.(type) {
 		case *image.NRGBA:
-			m.Pix = m.Pix[:len(m.Pix)-3]
+			m.Pix = m.Pix[: len(m.Pix)-3 : len(m.Pix)-3]
 		case *image.NRGBA64:
-			m.Pix = m.Pix[:len(m.Pix)-7]
+			m.Pix = m.Pix[: len(m.Pix)-7 : len(m.Pix)-7]
 		case *image.RGBA:
-			m.Pix = m.Pix[:len(m.Pix)-3]
+			m.Pix = m.Pix[: len(m.Pix)-3 : len(m.Pix)-3]
 		case *image.RGBA64:
-			m.Pix = m.Pix[:len(m.Pix)-7]
+			m.Pix = m.Pix[: len(m.Pix)-7 : len(m.Pix)-7]
 		case *image.Gray:
-			m.Pix = m.Pix[:len(m.Pix)-1]
+			m.Pix = m.Pix[: len(m.Pix)-1 : len(m.Pix)-1]
 		case *image.Gray16:
-			m.Pix = m.Pix[:len(m.Pix)-1]
+			m.Pix = m.Pix[: len(m.Pix)-1 : len(m.Pix)-1]
 		case *image.Paletted:
-			m.Pix = m.Pix[:len(m.Pix)-1]
+			m.Pix = m.Pix[: len(m.Pix)-1 : len(m.Pix)-1]
 		case *image.YCbCr:
-			m.Cb = m.Cb[:len(m.Cb)-1]
-			m.Cr = m.Cr[:len(m.Cr)-1]
+			m.Cb = m.Cb[: len(m.Cb)-1 : len(m.Cb)-1]
+			m.Cr = m.Cr[: len(m.Cr)-1 : len(m.Cr)-1]
 		default:
 			continue
 		}
@@ -43,8 +43,11 @@ func shortBufferImages(rect image.Rectangle) map[string]image.Image {
 	return out
 }
 
-// safeAt is the colour the image reports at (x, y), or transparent where the
-// image's own At panics because its buffers do not hold that pixel.
+// safeAt is the color the image reports at (x, y), or transparent where the
+// image's own At panics because its buffers do not hold that pixel. The images
+// shortBufferImages builds have no capacity past their length, so At panics
+// rather than reading the spare capacity; TestShortBufferWithSpareCapacity
+// covers an image that has some.
 func safeAt(img image.Image, x, y int) (c color.NRGBA) {
 	defer func() {
 		if recover() != nil {
@@ -54,7 +57,7 @@ func safeAt(img image.Image, x, y int) (c color.NRGBA) {
 	return color.NRGBAModel.Convert(img.At(x, y)).(color.NRGBA)
 }
 
-// TestShortBuffers checks that a pixel the buffers hold keeps its colour, that
+// TestShortBuffers checks that a pixel the buffers hold keeps its color, that
 // one they do not hold reads as transparent (the rule the scanner already
 // applies to a palette index the palette does not define), and that no
 // operation panics. Before the fix every one of these panicked inside a
@@ -122,7 +125,7 @@ func TestIssue159(t *testing.T) {
 	if got, want := dst.Bounds().Size(), image.Pt(height, width); got != want {
 		t.Fatalf("size: got %v, want %v", got, want)
 	}
-	// The first row of chroma is held, so the top left pixel keeps its colour.
+	// The first row of chroma is held, so the top left pixel keeps its color.
 	if got, want := dst.NRGBAAt(0, width-1), safeAt(img, 0, 0); got != want {
 		t.Fatalf("held pixel: got %v, want %v", got, want)
 	}
@@ -234,9 +237,23 @@ func TestYCbCrShort(t *testing.T) {
 		{"negative chroma stride", func(m *image.YCbCr) { m.CStride = -m.CStride }, true},
 		// Every row then shares one row of chroma, which the planes hold.
 		{"zero chroma stride", func(m *image.YCbCr) { m.CStride = 0 }, false},
-		{"blue chroma a byte short", func(m *image.YCbCr) { m.Cb = m.Cb[:len(m.Cb)-1] }, true},
-		{"red chroma a byte short", func(m *image.YCbCr) { m.Cr = m.Cr[:len(m.Cr)-1] }, true},
+		{"blue chroma a byte short", func(m *image.YCbCr) { m.Cb = m.Cb[: len(m.Cb)-1 : len(m.Cb)-1] }, true},
+		{"red chroma a byte short", func(m *image.YCbCr) { m.Cr = m.Cr[: len(m.Cr)-1 : len(m.Cr)-1] }, true},
 	}
+	// Well-formed images away from the origin, for every ratio: the chroma
+	// planes NewYCbCr allocates are exactly as large as the bounds need, so
+	// the count of chroma rows and columns has to be exact too.
+	for _, ratio := range []image.YCbCrSubsampleRatio{
+		image.YCbCrSubsampleRatio444, image.YCbCrSubsampleRatio422, image.YCbCrSubsampleRatio420,
+		image.YCbCrSubsampleRatio440, image.YCbCrSubsampleRatio411, image.YCbCrSubsampleRatio410,
+	} {
+		for _, r := range []image.Rectangle{image.Rect(3, 3, 10, 8), image.Rect(5, 1, 14, 6), image.Rect(1, 5, 2, 13)} {
+			if m := image.NewYCbCr(r, ratio); ycbcrShort(m) {
+				t.Errorf("ycbcrShort(NewYCbCr(%v, %v)) = true", r, ratio)
+			}
+		}
+	}
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -295,4 +312,35 @@ func TestNoColumns(t *testing.T) {
 	}
 	_ = Blur(img, 1)
 	_ = Resize(img, 0, 3, Linear)
+}
+
+// TestShortBufferWithSpareCapacity is a buffer one byte long with the capacity
+// of a whole pixel. image.NRGBA's own At reslices up to the capacity, so it
+// reads the pixel without panicking; the pixel is still not in the buffer and
+// must read as transparent.
+func TestShortBufferWithSpareCapacity(t *testing.T) {
+	t.Parallel()
+
+	pix := []uint8{255, 0, 0, 255}
+	img := &image.NRGBA{Pix: pix[:1], Stride: 4, Rect: image.Rect(0, 0, 1, 1)}
+	if got := Clone(img).NRGBAAt(0, 0); got != (color.NRGBA{}) {
+		t.Fatalf("got %v, want transparent", got)
+	}
+}
+
+// TestYCbCrHugeChromaStride is a chroma stride so large that the offset of a
+// later row wraps around to a small number on a 64-bit int. The coverage check
+// must not be fooled by the wrapped offset.
+func TestYCbCrHugeChromaStride(t *testing.T) {
+	t.Parallel()
+
+	img := &image.YCbCr{
+		Y: make([]uint8, 5), Cb: make([]uint8, 1), Cr: make([]uint8, 1),
+		YStride: 1, CStride: math.MaxInt/4 + 1, SubsampleRatio: image.YCbCrSubsampleRatio444,
+		Rect: image.Rect(0, 0, 1, 5),
+	}
+	if !ycbcrShort(img) {
+		t.Fatal("ycbcrShort = false for chroma planes that cannot hold row 1")
+	}
+	_ = Clone(img)
 }

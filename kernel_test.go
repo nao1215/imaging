@@ -75,7 +75,7 @@ func TestFilterKernelsMatchTheirFormulas(t *testing.T) {
 					want = tc.want(x)
 				}
 				for _, sx := range []float64{x, -x} {
-					if got := tc.filter.Kernel(sx); math.Abs(got-want) > 1e-12 {
+					if got := tc.filter.Kernel(sx); !(math.Abs(got-want) <= 1e-12) { // also rejects NaN
 						t.Fatalf("Kernel(%v) = %v, want %v", sx, got, want)
 					}
 				}

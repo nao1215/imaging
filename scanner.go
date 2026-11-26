@@ -67,13 +67,72 @@ func ycbcrShort(m *image.YCbCr) bool {
 	if !bufferCovers(len(m.Y), m.YStride, r.Dx(), r.Dy(), 1) {
 		return true
 	}
-	if m.CStride < 0 {
-		return true
+	// The chroma planes hold one sample per xdiv x ydiv block of pixels,
+	// counted from the block of Rect.Min, as image.YCbCr.COffset counts them.
+	// The rows and columns of samples the bounds reach are checked with
+	// bufferCovers, whose arithmetic cannot overflow: computing the offset of
+	// the last sample can, and a wrapped offset looks like one in range.
+	xdiv, ydiv := 1, 1
+	switch m.SubsampleRatio {
+	case image.YCbCrSubsampleRatio422:
+		xdiv = 2
+	case image.YCbCrSubsampleRatio420:
+		xdiv, ydiv = 2, 2
+	case image.YCbCrSubsampleRatio440:
+		ydiv = 2
+	case image.YCbCrSubsampleRatio411:
+		xdiv = 4
+	case image.YCbCrSubsampleRatio410:
+		xdiv, ydiv = 4, 2
+	default: // 444, and any other ratio COffset treats as 444
 	}
-	// The chroma offset grows with x and with y, so the planes hold every
-	// sample when they hold the first and the last.
-	first, last := m.COffset(r.Min.X, r.Min.Y), m.COffset(r.Max.X-1, r.Max.Y-1)
-	return first < 0 || last >= len(m.Cb) || last >= len(m.Cr)
+	cw := (r.Max.X-1)/xdiv - r.Min.X/xdiv + 1
+	ch := (r.Max.Y-1)/ydiv - r.Min.Y/ydiv + 1
+	return !bufferCovers(len(m.Cb), m.CStride, cw, ch, 1) || !bufferCovers(len(m.Cr), m.CStride, cw, ch, 1)
+}
+
+// withoutSpareCapacity returns a shallow copy of a short image whose buffers
+// have no capacity past their length. The image types' own At methods slice a
+// pixel up to the capacity, so with spare capacity they would read a pixel the
+// buffer does not hold instead of panicking, and scanShort would not see that
+// the pixel is missing.
+func withoutSpareCapacity(img image.Image) image.Image {
+	clip := func(b []uint8) []uint8 { return b[:len(b):len(b)] }
+	switch m := img.(type) {
+	case *image.NRGBA:
+		c := *m
+		c.Pix = clip(c.Pix)
+		return &c
+	case *image.NRGBA64:
+		c := *m
+		c.Pix = clip(c.Pix)
+		return &c
+	case *image.RGBA:
+		c := *m
+		c.Pix = clip(c.Pix)
+		return &c
+	case *image.RGBA64:
+		c := *m
+		c.Pix = clip(c.Pix)
+		return &c
+	case *image.Gray:
+		c := *m
+		c.Pix = clip(c.Pix)
+		return &c
+	case *image.Gray16:
+		c := *m
+		c.Pix = clip(c.Pix)
+		return &c
+	case *image.Paletted:
+		c := *m
+		c.Pix = clip(c.Pix)
+		return &c
+	case *image.YCbCr:
+		c := *m
+		c.Y, c.Cb, c.Cr = clip(c.Y), clip(c.Cb), clip(c.Cr)
+		return &c
+	}
+	return img
 }
 
 // paletteSize is the number of entries scanner.palette always holds. A pixel of
@@ -87,7 +146,7 @@ const paletteSize = 256
 // image's own palette is, and entries the image does not define are left as the
 // zero color.NRGBA, which is transparent. An index a palette does not define has
 // no correct color, and answering with a transparent one keeps the undefined
-// pixel visibly absent rather than painting it with an arbitrary neighbour.
+// pixel visibly absent rather than painting it with an arbitrary neighbor.
 // Sizing the table to the pixel type rather than to the palette is also what
 // lets scanPaletted index it without a per-pixel bounds check.
 func newScanner(img image.Image) *scanner {
@@ -96,6 +155,9 @@ func newScanner(img image.Image) *scanner {
 		w:     img.Bounds().Dx(),
 		h:     img.Bounds().Dy(),
 		short: isShort(img),
+	}
+	if s.short {
+		s.image = withoutSpareCapacity(img)
 	}
 	if palImg, ok := img.(*image.Paletted); ok {
 		s.palette = make([]color.NRGBA, paletteSize)
@@ -429,7 +491,7 @@ func (s *scanner) scanDefault(x1, y1, x2, y2 int, dst []uint8) {
 // scanShort scans an image whose buffers end before its bounds do. It asks the
 // image for each pixel, as scanDefault does, and reads a pixel the buffers do
 // not hold as transparent: the same answer newScanner gives for a palette
-// index the palette does not define. Such a pixel has no correct colour, and
+// index the palette does not define. Such a pixel has no correct color, and
 // the alternative, the index out of range the image's own At raises, would end
 // the process from inside a worker goroutine.
 func (s *scanner) scanShort(x1, y1, x2, y2 int, dst []uint8) {
@@ -445,7 +507,7 @@ func (s *scanner) scanShort(x1, y1, x2, y2 int, dst []uint8) {
 	}
 }
 
-// shortAt returns the colour at (x, y), or transparent where the image cannot
+// shortAt returns the color at (x, y), or transparent where the image cannot
 // produce one.
 func (s *scanner) shortAt(x, y int) (c color.NRGBA) {
 	if p, ok := s.image.(*image.Paletted); ok {

@@ -175,7 +175,7 @@ func resizeVertical(img image.Image, height int, filter ResampleFilter) *image.N
 }
 
 // storeWeightedRow writes a row of alpha-weighted sums to d: each pixel's
-// colour is its sums divided by its alpha, and its alpha is the alpha sum. A
+// color is its sums divided by its alpha, and its alpha is the alpha sum. A
 // pixel whose alpha sum is zero is left as it is.
 func storeWeightedRow(d []uint8, acc []float64) {
 	for i := 0; i < len(d); i += 4 {
