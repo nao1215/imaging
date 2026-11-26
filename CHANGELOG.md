@@ -4,6 +4,8 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [1.0.14] - 2026-11-27
+
 ### Fixed
 
 - Every function accepts an `*image.NRGBA`, `*image.NRGBA64`, `*image.RGBA`, `*image.RGBA64`, `*image.Gray`, `*image.Gray16`, `*image.Paletted` or `*image.YCbCr` whose buffers end before its bounds do, such as the 4:2:0 YCbCr of upstream issue disintegration/imaging#159 whose chroma planes are a row short for an odd height. A pixel the buffers do not hold reads as transparent, as a palette index the palette does not define already did, also when the buffer has capacity past its length (the image types' own `At` methods read into that capacity) and when a stride is so large that a later row's offset overflows and wraps around to the bytes of another pixel. Such an image panicked with an index out of range inside a worker goroutine and ended the process.
