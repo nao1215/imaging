@@ -344,3 +344,43 @@ func TestYCbCrHugeChromaStride(t *testing.T) {
 	}
 	_ = Clone(img)
 }
+
+// TestWithoutSpareCapacity checks that each concrete type comes back with its
+// buffers' capacity cut to their length, and any other image as it was.
+func TestWithoutSpareCapacity(t *testing.T) {
+	t.Parallel()
+
+	for name, img := range scannerTestImages(image.Rect(0, 0, 3, 2)) {
+		clipped := withoutSpareCapacity(img)
+		switch m := clipped.(type) {
+		case *image.YCbCr:
+			if cap(m.Y) != len(m.Y) || cap(m.Cb) != len(m.Cb) || cap(m.Cr) != len(m.Cr) {
+				t.Fatalf("%s: spare capacity left", name)
+			}
+		case *image.Alpha:
+			if clipped != img {
+				t.Fatalf("%s: a type the scanner does not read directly was copied", name)
+			}
+		default:
+			if clipped == img && name != "Generic" {
+				t.Fatalf("%s: not copied", name)
+			}
+		}
+	}
+}
+
+// TestScannerLongPalette is a palette of more than the 256 colors a pixel byte
+// can index: the entries past 255 are unreachable and ignored.
+func TestScannerLongPalette(t *testing.T) {
+	t.Parallel()
+
+	pal := make(color.Palette, 300)
+	for i := range pal {
+		pal[i] = color.NRGBA{uint8(i), 0, 0, 255}
+	}
+	img := image.NewPaletted(image.Rect(0, 0, 1, 1), pal)
+	img.Pix[0] = 255
+	if got := Clone(img).NRGBAAt(0, 0); got != (color.NRGBA{255, 0, 0, 255}) {
+		t.Fatalf("got %v", got)
+	}
+}
