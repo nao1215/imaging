@@ -77,12 +77,12 @@ func absInt(i int) int {
 func clamp(x float64) uint8 {
 	v := int64(x + 0.5)
 	if v > 255 {
-		v = 255
+		return 255
 	}
-	if v < 0 {
-		v = 0
+	if v > 0 {
+		return uint8(v)
 	}
-	return uint8(v)
+	return 0
 }
 
 // reverse reverses the order of pixels in the given slice.

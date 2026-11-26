@@ -41,9 +41,7 @@ func blurHorizontal(img image.Image, kernel []float64) *image.NRGBA {
 		scanLineF := make([]float64, len(scanLine))
 		for y := range ys {
 			src.scan(0, y, src.w, y+1, scanLine)
-			for i, v := range scanLine {
-				scanLineF[i] = float64(v)
-			}
+			premultiplyRow(scanLineF, scanLine)
 			for x := 0; x < src.w; x++ {
 				min := x - radius
 				if min < 0 {
@@ -59,11 +57,10 @@ func blurHorizontal(img image.Image, kernel []float64) *image.NRGBA {
 					weight := kernel[absInt(x-ix)]
 					wsum += weight
 					s := scanLineF[i : i+4 : i+4]
-					wa := s[3] * weight
-					r += s[0] * wa
-					g += s[1] * wa
-					b += s[2] * wa
-					a += wa
+					r += s[0] * weight
+					g += s[1] * weight
+					b += s[2] * weight
+					a += s[3] * weight
 				}
 				if a != 0 {
 					aInv := 1 / a
@@ -81,6 +78,9 @@ func blurHorizontal(img image.Image, kernel []float64) *image.NRGBA {
 	return dst
 }
 
+// blurVertical blurs the image along its columns. Each column is scanned once
+// and premultiplied by its alpha into floats, as blurHorizontal does for a row,
+// so each tap of the kernel costs four multiply-adds and no conversions.
 func blurVertical(img image.Image, kernel []float64) *image.NRGBA {
 	src := newScanner(img)
 	dst := image.NewNRGBA(image.Rect(0, 0, src.w, src.h))
@@ -91,29 +91,19 @@ func blurVertical(img image.Image, kernel []float64) *image.NRGBA {
 		scanLineF := make([]float64, len(scanLine))
 		for x := range xs {
 			src.scan(x, 0, x+1, src.h, scanLine)
-			for i, v := range scanLine {
-				scanLineF[i] = float64(v)
-			}
+			premultiplyRow(scanLineF, scanLine)
 			for y := 0; y < src.h; y++ {
-				min := y - radius
-				if min < 0 {
-					min = 0
-				}
-				max := y + radius
-				if max > src.h-1 {
-					max = src.h - 1
-				}
+				lo := max(y-radius, 0)
+				hi := min(y+radius, src.h-1)
 				var r, g, b, a, wsum float64
-				for iy := min; iy <= max; iy++ {
-					i := iy * 4
+				for iy := lo; iy <= hi; iy++ {
 					weight := kernel[absInt(y-iy)]
 					wsum += weight
-					s := scanLineF[i : i+4 : i+4]
-					wa := s[3] * weight
-					r += s[0] * wa
-					g += s[1] * wa
-					b += s[2] * wa
-					a += wa
+					s := scanLineF[iy*4 : iy*4+4 : iy*4+4]
+					r += s[0] * weight
+					g += s[1] * weight
+					b += s[2] * weight
+					a += s[3] * weight
 				}
 				if a != 0 {
 					aInv := 1 / a
@@ -129,6 +119,21 @@ func blurVertical(img image.Image, kernel []float64) *image.NRGBA {
 	})
 
 	return dst
+}
+
+// premultiplyRow converts NRGBA bytes to floats with each colour channel
+// multiplied by the pixel's alpha. The products are integers below 2^16, so
+// they are exact, and a filter tap needs one multiplication per channel.
+func premultiplyRow(dst []float64, src []uint8) {
+	for i := 0; i+3 < len(src) && i+3 < len(dst); i += 4 {
+		s := src[i : i+4 : i+4]
+		p := dst[i : i+4 : i+4]
+		a := float64(s[3])
+		p[0] = float64(s[0]) * a
+		p[1] = float64(s[1]) * a
+		p[2] = float64(s[2]) * a
+		p[3] = a
+	}
 }
 
 // Sharpen produces a sharpened version of the image.

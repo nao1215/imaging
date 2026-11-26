@@ -244,11 +244,36 @@ Output:
 | Examples and unit tests ([example_test.go](example_test.go), [tools_test.go](tools_test.go)) | A function that no longer gives the pixels its tests spell out |
 | Golden images ([resize_test.go](resize_test.go), [adjust_test.go](adjust_test.go), [effects_test.go](effects_test.go)) | A filter or adjustment whose output drifts from the reviewed image in `testdata/` |
 | Metamorphic tests ([metamorphic_test.go](metamorphic_test.go)) | A result that changes with the image's origin or storage type, a flip or rotation that does not undo, or a resize that treats the two directions differently |
-| Differential tests ([metamorphic_test.go](metamorphic_test.go), [scanner_test.go](scanner_test.go)) | A paste that disagrees with `image/draw`, or a fast path that reads another color than the image's own `At` |
-| Fuzzing ([fuzz_test.go](fuzz_test.go)) | A crash or a wrong size on a malformed file, size, rectangle or angle |
+| Differential tests ([metamorphic_test.go](metamorphic_test.go), [scanner_test.go](scanner_test.go), [differential_test.go](differential_test.go)) | A paste that disagrees with `image/draw`, a fast path that reads another color than the image's own `At`, or a faster resize or blur pass that disagrees with the pass it replaced |
+| Fuzzing ([fuzz_test.go](fuzz_test.go), [malformed_test.go](malformed_test.go)) | A crash or a wrong size on a malformed file, size, rectangle, angle, or image whose buffers do not match its bounds |
 | Mutation testing ([.github/workflows/mutation.yml](.github/workflows/mutation.yml)) | A test that runs a changed comparison or bound without noticing the change |
 
 How to run each one is in [doc/testing.md](doc/testing.md).
+
+### Performance compared with disintegration/imaging
+
+A 1920x1280 JPEG (decoded as `*image.YCbCr`, or converted to `*image.NRGBA`), median of 10 interleaved runs, `GOMAXPROCS=4`, Go 1.26, AMD Ryzen AI MAX+ 395. "~" means no significant difference (p >= 0.05). Reproduce with `CPUS=8-11 scripts/bench_upstream.sh`.
+
+| Operation | disintegration/imaging | nao1215/imaging | Change |
+|---|---:|---:|---:|
+| `Resize` to 640 px, `Lanczos`, NRGBA | 7.77 ms | 6.32 ms | -18.7% |
+| `Resize` to 640 px, `Lanczos`, YCbCr | 9.10 ms | 7.65 ms | -16.0% |
+| `Resize` to 640 px, `Linear`, NRGBA | 3.10 ms | 2.91 ms | -5.9% |
+| `Resize` to 640 px, `NearestNeighbor`, NRGBA | 0.270 ms | 0.118 ms | -56.3% |
+| `Fill` 300x300, `Lanczos` | 5.34 ms | 4.38 ms | -18.0% |
+| `Thumbnail` 150x150, `CatmullRom`, YCbCr | 3.92 ms | 3.50 ms | -10.7% |
+| `Blur` sigma 3 | 29.1 ms | 27.2 ms | -6.7% |
+| `Sharpen` sigma 1 | 16.8 ms | 16.2 ms | -3.9% |
+| `Grayscale`, YCbCr | 2.55 ms | 2.57 ms | ~ |
+| `AdjustContrast` | 0.914 ms | 0.912 ms | ~ |
+| `AdjustSaturation` | 13.5 ms | 13.4 ms | ~ |
+| `Rotate90` | 1.01 ms | 0.990 ms | ~ |
+| `Rotate` 30 degrees | 13.5 ms | 13.5 ms | ~ |
+| `Convolve3x3` | 9.12 ms | 8.91 ms | ~ |
+| `Histogram` | 1.03 ms | 1.03 ms | ~ |
+| `Paste` 200 px image | 0.435 ms | 0.431 ms | ~ |
+| `Overlay` 200 px image | 0.472 ms | 0.465 ms | ~ |
+| `Clone`, YCbCr | 1.71 ms | 1.71 ms | ~ |
 
 ## Contributors ✨
 

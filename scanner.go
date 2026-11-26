@@ -457,3 +457,32 @@ func (s *scanner) shortAt(x, y int) (c color.NRGBA) {
 	}()
 	return color.NRGBAModel.Convert(s.image.At(x, y)).(color.NRGBA)
 }
+
+// rowReader reads whole rows of an image as NRGBA bytes. For a well-formed
+// *image.NRGBA it hands out the image's own rows without copying them; any
+// other image is scanned into the caller's buffer.
+type rowReader struct {
+	w, h  int
+	nrgba *image.NRGBA
+	scan  *scanner
+}
+
+func newRowReader(img image.Image) rowReader {
+	s := newScanner(img)
+	r := rowReader{w: s.w, h: s.h, scan: s}
+	if m, ok := img.(*image.NRGBA); ok && !s.short {
+		r.nrgba = m
+	}
+	return r
+}
+
+// row returns row y (counted from the top of the bounds) of w*4 bytes. The
+// returned slice may be buf or the image's own memory and must not be written.
+func (r rowReader) row(y int, buf []uint8) []uint8 {
+	if r.nrgba != nil {
+		i := y * r.nrgba.Stride
+		return r.nrgba.Pix[i : i+r.w*4 : i+r.w*4]
+	}
+	r.scan.scan(0, y, r.w, y+1, buf)
+	return buf
+}

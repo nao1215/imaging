@@ -26,6 +26,8 @@ An image operation rarely has an expected output that is easy to write down, but
 
 `TestMetamorphic_PasteThenCrop` pastes an opaque image with `Paste` and with `image/draw`'s `draw.Draw` and `draw.Src`, which have to agree. `TestScannerMatchesImageAt` in `scanner_test.go` checks that the scanner's fast path for each concrete image type reads the color the image's own `At` reports.
 
+`differential_test.go` keeps the resize and blur passes as they were before they were rewritten for speed, and compares the new passes with them on images rapid draws (alpha often exactly 0 or 255). The vertical resize, which now adds whole rows instead of walking columns, and the nearest-neighbour downscale, which now copies from an NRGBA source directly, must agree bit for bit. The horizontal resize and both blur passes now premultiply a line by its alpha once rather than at every tap; that rounds the product of color, alpha and weight in another order, so they are allowed a level of rounding (with no tolerance, rapid finds a differing image within the first hundred).
+
 ## Running the generated tests longer
 
 `go test` draws a hundred inputs per test. Draw more, or replay a failure, with rapid's flags:
@@ -39,7 +41,7 @@ The `Property` workflow (`.github/workflows/property.yml`) draws 20,000 inputs p
 
 ## Fuzzing
 
-`FuzzDecode` feeds arbitrary bytes to `Decode` with and without auto-orientation, `FuzzFormatFromFilename` arbitrary names to the format lookup, and `FuzzResizeDimensions` arbitrary sizes, rectangles and angles to the resizing and cropping functions, all in `fuzz_test.go`. `go test` runs their seed corpus; the `Fuzz` workflow searches each of them every night.
+`FuzzDecode` feeds arbitrary bytes to `Decode` with and without auto-orientation, `FuzzFormatFromFilename` arbitrary names to the format lookup, and `FuzzResizeDimensions` arbitrary sizes, rectangles and angles to the resizing and cropping functions, all in `fuzz_test.go`. `FuzzMalformedImage` in `malformed_test.go` builds each image type the scanner reads directly from bounds, strides and buffer lengths that need not agree, the kind of image of upstream issue disintegration/imaging#159, and checks that no operation panics. `go test` runs their seed corpus; the `Fuzz` workflow searches each of them every night.
 
 ```sh
 go test . -run '^$' -fuzz '^FuzzDecode$' -fuzztime 1m
@@ -62,3 +64,7 @@ Efficacy (killed / (killed + lived)) measured on 2026-11-19, the first full run,
 | `.` (the package) | 1157 | 119 | 8 | 4 | 90.67% |
 
 Half of the survivors (59) are in `resize.go`, most of them in the kernels of the filters no golden image uses (`Hermite`, `BSpline`, `Bartlett`, `Hann`, `Hamming`, `Blackman`, `Welch`, `Cosine`) and in the bounds `precomputeWeights`, `Fit` and `Fill` compare against, which is where a test is worth adding next. Some cannot be killed: the length of the slice a row is scanned into can grow without changing what the scanner writes. A pull request should not lower the efficacy below this table.
+
+## Benchmarks against disintegration/imaging
+
+`scripts/upstreambench` is a module of its own that runs the same operations on the same 1920x1280 photo with this package and with the one it was forked from. `scripts/bench_upstream.sh [rounds] [regexp]` runs the two in turn, one process per round, and summarises them with benchstat; the table in the README comes from it. On a shared machine, pin the runs (`CPUS=8-11`) and stop other heavy work: with a busy GPU sharing the power budget, the spread was ±45% and the comparison meant nothing.

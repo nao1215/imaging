@@ -12,6 +12,7 @@ All notable changes to this project are documented in this file. The format is b
 
 ### Changed
 
+- `Resize`, `Fit`, `Fill` and `Thumbnail` are 10 to 19% faster with the `Lanczos` and `CatmullRom` filters on a 1920x1280 photo, `NearestNeighbor` downscaling of an `*image.NRGBA` is twice as fast, and `Blur` and `Sharpen` are 4 to 7% faster. The vertical resize adds whole source rows rather than walking columns, and gives the same result bit for bit; the horizontal resize and both blur passes premultiply each line by its alpha once rather than at every tap of the filter, which can round a channel one level the other way. `clamp` takes its early returns again: the version that assigned and fell through made every filtered resize about 12% slower than upstream. The README lists the comparison with disintegration/imaging, and `scripts/bench_upstream.sh` reproduces it.
 - `FuzzMalformedImage` builds every concrete image type from arbitrary bounds, strides and buffer lengths and runs the operations over it.
 
 ## [1.0.13] - 2026-11-19
