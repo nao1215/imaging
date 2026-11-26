@@ -110,19 +110,20 @@ func resizeHorizontal(img image.Image, width int, filter ResampleFilter) *image.
 	weights := precomputeWeights(width, src.w, filter)
 	parallel(0, src.h, func(ys <-chan int) {
 		scanLine := make([]uint8, src.w*4)
+		pre := make([]float64, src.w*4)
 		for y := range ys {
 			src.scan(0, y, src.w, y+1, scanLine)
+			premultiplyRow(pre, scanLine)
 			j0 := y * dst.Stride
 			for x := range weights {
 				var r, g, b, a float64
 				for _, w := range weights[x] {
 					i := w.index * 4
-					s := scanLine[i : i+4 : i+4]
-					aw := float64(s[3]) * w.weight
-					r += float64(s[0]) * aw
-					g += float64(s[1]) * aw
-					b += float64(s[2]) * aw
-					a += aw
+					s := pre[i : i+4 : i+4]
+					r += s[0] * w.weight
+					g += s[1] * w.weight
+					b += s[2] * w.weight
+					a += s[3] * w.weight
 				}
 				if a != 0 {
 					aInv := 1 / a
@@ -139,38 +140,55 @@ func resizeHorizontal(img image.Image, width int, filter ResampleFilter) *image.
 	return dst
 }
 
+// resizeVertical resamples the image to the given height. It works one output
+// row at a time and adds whole source rows into it, rather than one column at a
+// time: a column of a wide image touches a new cache line for every pixel,
+// while a row is read in order. Each output pixel still sums its weights in
+// the order precomputeWeights gives them, so the result is the same, bit for
+// bit, as a column-wise pass.
 func resizeVertical(img image.Image, height int, filter ResampleFilter) *image.NRGBA {
-	src := newScanner(img)
-	dst := image.NewNRGBA(image.Rect(0, 0, src.w, height))
+	src := newRowReader(img)
+	w := src.w
+	dst := image.NewNRGBA(image.Rect(0, 0, w, height))
 	weights := precomputeWeights(height, src.h, filter)
-	parallel(0, src.w, func(xs <-chan int) {
-		scanLine := make([]uint8, src.h*4)
-		for x := range xs {
-			src.scan(x, 0, x+1, src.h, scanLine)
-			for y := range weights {
-				var r, g, b, a float64
-				for _, w := range weights[y] {
-					i := w.index * 4
-					s := scanLine[i : i+4 : i+4]
-					aw := float64(s[3]) * w.weight
-					r += float64(s[0]) * aw
-					g += float64(s[1]) * aw
-					b += float64(s[2]) * aw
-					a += aw
-				}
-				if a != 0 {
-					aInv := 1 / a
-					j := y*dst.Stride + x*4
-					d := dst.Pix[j : j+4 : j+4]
-					d[0] = clamp(r * aInv)
-					d[1] = clamp(g * aInv)
-					d[2] = clamp(b * aInv)
-					d[3] = clamp(a)
+	parallel(0, height, func(ys <-chan int) {
+		buf := make([]uint8, w*4)
+		acc := make([]float64, w*4)
+		for y := range ys {
+			clear(acc)
+			for _, wt := range weights[y] {
+				row := src.row(wt.index, buf)
+				for i := 0; i < len(row); i += 4 {
+					s := row[i : i+4 : i+4]
+					aw := float64(s[3]) * wt.weight
+					a := acc[i : i+4 : i+4]
+					a[0] += float64(s[0]) * aw
+					a[1] += float64(s[1]) * aw
+					a[2] += float64(s[2]) * aw
+					a[3] += aw
 				}
 			}
+			storeWeightedRow(dst.Pix[y*dst.Stride:][:len(acc)], acc)
 		}
 	})
 	return dst
+}
+
+// storeWeightedRow writes a row of alpha-weighted sums to d: each pixel's
+// color is its sums divided by its alpha, and its alpha is the alpha sum. A
+// pixel whose alpha sum is zero is left as it is.
+func storeWeightedRow(d []uint8, acc []float64) {
+	for i := 0; i < len(d); i += 4 {
+		a := acc[i : i+4 : i+4]
+		if a[3] != 0 {
+			aInv := 1 / a[3]
+			p := d[i : i+4 : i+4]
+			p[0] = clamp(a[0] * aInv)
+			p[1] = clamp(a[1] * aInv)
+			p[2] = clamp(a[2] * aInv)
+			p[3] = clamp(a[3])
+		}
+	}
 }
 
 // resizeNearest is a fast nearest-neighbor resize, no filtering.
@@ -179,7 +197,14 @@ func resizeNearest(img image.Image, width, height int) *image.NRGBA {
 	dx := float64(img.Bounds().Dx()) / float64(width)
 	dy := float64(img.Bounds().Dy()) / float64(height)
 
-	if dx > 1 && dy > 1 {
+	// A downscale reads few of the source pixels, so converting the whole
+	// source to NRGBA first would cost more than it saves; such a source is
+	// read one pixel at a time through the scanner. A well-formed NRGBA
+	// source needs no conversion and is copied from directly either way.
+	// Both branches give the same pixels, so this test chooses a speed, not a
+	// result, and no test can tell its mutants from it.
+	nrgba, isNRGBA := img.(*image.NRGBA)
+	if dx > 1 && dy > 1 && (!isNRGBA || isShort(nrgba)) {
 		src := newScanner(img)
 		parallel(0, height, func(ys <-chan int) {
 			for y := range ys {

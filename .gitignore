@@ -20,3 +20,6 @@ testdata/rapid/
 
 # Bytecode Python leaves beside scripts/lock_actions.py when it runs.
 __pycache__/
+
+# Output of scripts/bench_upstream.sh.
+bench-results/

@@ -4,6 +4,20 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+### Fixed
+
+- Every function accepts an `*image.NRGBA`, `*image.NRGBA64`, `*image.RGBA`, `*image.RGBA64`, `*image.Gray`, `*image.Gray16`, `*image.Paletted` or `*image.YCbCr` whose buffers end before its bounds do, such as the 4:2:0 YCbCr of upstream issue disintegration/imaging#159 whose chroma planes are a row short for an odd height. A pixel the buffers do not hold reads as transparent, as a palette index the palette does not define already did, also when the buffer has capacity past its length (the image types' own `At` methods read into that capacity) and when a stride is so large that a later row's offset overflows and wraps around to the bytes of another pixel. Such an image panicked with an index out of range inside a worker goroutine and ended the process.
+- An image with no columns but a non-zero stride no longer panics: the scanner sliced its empty buffer at the offset of the second row.
+- A panic raised while processing an image, for example by the `At` method of a caller's own image type, is raised again in the goroutine that called the function, where it can be recovered. It was raised in a worker goroutine and ended the process.
+
+### Changed
+
+- The documentation of `Paste` says that it replaces the pixels it covers, transparent ones included, and points to `Overlay` with an opacity of 1 for drawing an image over the background (upstream issue disintegration/imaging#164). A new differential test checks that `Overlay` at opacity 1 agrees with `image/draw`'s `draw.Over`.
+- Against disintegration/imaging on a 1920x1280 photo: `Resize` and `Fill` with `Lanczos` are 13 to 16% faster, `Thumbnail` with `CatmullRom` 8%, `NearestNeighbor` downscaling of an `*image.NRGBA` 57%, `Blur`, `Sharpen` and `Convolve3x3` 5 to 9%; nothing else moves by more than 1%. The vertical resize adds whole source rows rather than walking columns, and gives the same result bit for bit; the horizontal resize and both blur passes premultiply each line by its alpha once rather than at every tap of the filter, which can round a channel one level the other way. `clamp` takes its early returns again, because the version that assigned and fell through made every filtered resize about 12% slower than upstream; convolution, whose values are often out of range, uses a branchless `clampSaturating` instead, a third faster there. The README lists the comparison, and `scripts/bench_upstream.sh` reproduces it.
+- CI is stricter. Pull requests compare the benchmarks of the base and the head on one runner and fail on a consistent slowdown of more than 25% (`scripts/ci_benchmark.py`); fuzz every target for 15 seconds; run the tests as `GOARCH=386` and, on Linux, under the race detector; and need 99% coverage with no drop (it was 90%). Mutation testing fails at an efficacy of 90% or less, set in `.gremlins.yaml` because gremlins v0.6.0 ignores `--threshold-efficacy`, and runs with `GOFLAGS=-count=1`, without which a cached test run made every mutant time out and the run report 0%. Every test job has a timeout.
+- Mutation efficacy is 91.92% (86.83% for v1.0.13 measured the same way). Every resampling kernel is checked against the textbook form of its formula, `scan` panics on a destination shorter than the region instead of writing past its length within its capacity, and `PasteCenter` and `OverlayCenter` are checked by the margins they leave.
+- `FuzzMalformedImage` builds every concrete image type from arbitrary bounds, strides and buffer lengths and runs the operations over it.
+
 ## [1.0.13] - 2026-11-19
 
 ### Fixed
