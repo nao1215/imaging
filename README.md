@@ -202,30 +202,48 @@ img, err := imaging.Open("test.jpg", imaging.AutoOrientation(true))
 
 How to run each one is in [doc/testing.md](doc/testing.md).
 
+### Fixes not in disintegration/imaging
+
+<details>
+<summary>Bugs fixed here that disintegration/imaging still has</summary>
+
+- A `*image.YCbCr` whose chroma planes are a row short ([disintegration/imaging#159](https://github.com/disintegration/imaging/issues/159)), or any image whose buffer ends before its bounds or whose stride overflows, panics and ends the process. Here the missing pixels read as transparent.
+- A panic inside a worker goroutine, for example from the `At` method of a custom image type, ends the process. Here it reaches the caller, where it can be recovered.
+- An `*image.Paletted` with a short, empty or nil-holding palette panics. Here an undefined index reads as transparent.
+- `Paste` returns the pasted image at its own size when it covers the whole background. Here the result keeps the background's size.
+- `Overlay` turns a background pixel's color into the byte conversion of NaN where neither layer has alpha. Here the pixel stays as it is.
+- `Rotate` with an infinite or NaN angle panics. Here it returns an empty image.
+- `CropAnchor` and `CropCenter` crop a region of the absolute size for a negative width or height. Here they return an empty image.
+- `AdjustSigmoid` with a tiny factor turns the image black or flat gray. Here the image is returned unchanged.
+- `Decode` with `AutoOrientation(true)` leaks a goroutine for every file that fails to decode.
+- `golang.org/x/image` is pinned to a 2019 version with known TIFF decoder advisories. Here it follows the latest release.
+
+</details>
+
 ### Performance compared with disintegration/imaging
 
-A 1920x1280 JPEG (decoded as `*image.YCbCr`, or converted to `*image.NRGBA`), median of 10 interleaved runs, `GOMAXPROCS=4`, Go 1.26, AMD Ryzen AI MAX+ 395. "~" means no significant difference (p >= 0.05). Reproduce with `CPUS=8-11 scripts/bench_upstream.sh`.
+A 1920x1280 JPEG (decoded as `*image.YCbCr`, or converted to `*image.NRGBA`), median of 10 interleaved runs, `GOMAXPROCS=4`, Go 1.26, AMD Ryzen AI MAX+ 395. "Same" means no significant difference (p >= 0.05). Reproduce with `CPUS=8-11 scripts/bench_upstream.sh`.
 
-| Operation | disintegration/imaging | nao1215/imaging | Change |
+| Operation | disintegration/imaging | nao1215/imaging | nao1215/imaging is |
 |---|---:|---:|---:|
-| `Resize` to 640 px, `Lanczos`, NRGBA | 7.83 ms | 6.62 ms | -15.5% |
-| `Resize` to 640 px, `Lanczos`, YCbCr | 9.19 ms | 7.99 ms | -13.1% |
-| `Resize` to 640 px, `Linear`, NRGBA | 3.14 ms | 3.00 ms | -4.3% |
-| `Resize` to 640 px, `NearestNeighbor`, NRGBA | 0.268 ms | 0.116 ms | -56.8% |
-| `Fill` 300x300, `Lanczos` | 5.40 ms | 4.63 ms | -14.4% |
-| `Thumbnail` 150x150, `CatmullRom`, YCbCr | 3.97 ms | 3.66 ms | -7.9% |
-| `Blur` sigma 3 | 29.7 ms | 27.1 ms | -8.5% |
-| `Sharpen` sigma 1 | 17.0 ms | 16.1 ms | -5.3% |
-| `Convolve3x3` | 9.19 ms | 8.49 ms | -7.7% |
-| `Grayscale`, YCbCr | 2.55 ms | 2.55 ms | ~ |
-| `AdjustContrast` | 0.912 ms | 0.910 ms | ~ |
-| `AdjustSaturation` | 13.6 ms | 13.6 ms | ~ |
-| `Rotate90` | 0.999 ms | 1.01 ms | ~ |
-| `Rotate` 30 degrees | 13.5 ms | 13.5 ms | ~ |
-| `Histogram` | 1.03 ms | 1.05 ms | +1.1% |
-| `Paste` 200 px image | 0.429 ms | 0.432 ms | ~ |
-| `Overlay` 200 px image | 0.479 ms | 0.480 ms | ~ |
-| `Clone`, YCbCr | 1.69 ms | 1.70 ms | ~ |
+| `Resize` to 640 px, `Lanczos`, NRGBA | 7.83 ms | 6.62 ms | 1.18x faster |
+| `Resize` to 640 px, `Lanczos`, YCbCr | 9.19 ms | 7.99 ms | 1.15x faster |
+| `Resize` to 640 px, `Linear`, NRGBA | 3.14 ms | 3.00 ms | 1.05x faster |
+| `Resize` to 640 px, `NearestNeighbor`, NRGBA | 0.268 ms | 0.116 ms | 2.31x faster |
+| `Fill` 300x300, `Lanczos` | 5.40 ms | 4.63 ms | 1.17x faster |
+| `Thumbnail` 150x150, `CatmullRom`, YCbCr | 3.97 ms | 3.66 ms | 1.08x faster |
+| `Blur` sigma 3 | 29.7 ms | 27.1 ms | 1.10x faster |
+| `Sharpen` sigma 1 | 17.0 ms | 16.1 ms | 1.06x faster |
+| `Convolve3x3` | 9.19 ms | 8.49 ms | 1.08x faster |
+| `Grayscale`, YCbCr | 2.55 ms | 2.55 ms | same |
+| `AdjustContrast` | 0.912 ms | 0.910 ms | same |
+| `AdjustSaturation` | 13.6 ms | 13.6 ms | same |
+| `Rotate90` | 0.999 ms | 1.01 ms | same |
+| `Rotate` 30 degrees | 13.5 ms | 13.5 ms | same |
+| `Histogram` | 1.03 ms | 1.05 ms | 1% slower |
+| `Paste` 200 px image | 0.429 ms | 0.432 ms | same |
+| `Overlay` 200 px image | 0.479 ms | 0.480 ms | same |
+| `Clone`, YCbCr | 1.69 ms | 1.70 ms | same |
 
 ## Contributors ✨
 
