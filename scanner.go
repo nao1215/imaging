@@ -117,10 +117,11 @@ func newScanner(img image.Image) *scanner {
 
 // scan scans the given rectangular region of the image into dst.
 func (s *scanner) scan(x1, y1, x2, y2 int, dst []uint8) {
-	// An empty region reads nothing. The fast paths below would still slice
-	// the buffer at the row's offset, which lies past the end of the empty
-	// buffer of an image with no columns but a stride.
-	if x1 >= x2 || y1 >= y2 {
+	// An empty row reads nothing. The fast paths below would still slice the
+	// buffer at the row's offset, which lies past the end of the empty buffer
+	// of an image with no columns but a stride. (No rows needs no check: the
+	// loops over y do not start.)
+	if x1 >= x2 {
 		return
 	}
 	if s.short {
@@ -481,7 +482,7 @@ func newRowReader(img image.Image) rowReader {
 func (r rowReader) row(y int, buf []uint8) []uint8 {
 	if r.nrgba != nil {
 		i := y * r.nrgba.Stride
-		return r.nrgba.Pix[i : i+r.w*4 : i+r.w*4]
+		return r.nrgba.Pix[i : i+r.w*4]
 	}
 	r.scan.scan(0, y, r.w, y+1, buf)
 	return buf

@@ -125,7 +125,7 @@ func blurVertical(img image.Image, kernel []float64) *image.NRGBA {
 // multiplied by the pixel's alpha. The products are integers below 2^16, so
 // they are exact, and a filter tap needs one multiplication per channel.
 func premultiplyRow(dst []float64, src []uint8) {
-	for i := 0; i+3 < len(src) && i+3 < len(dst); i += 4 {
+	for i := 0; i < len(src); i += 4 {
 		s := src[i : i+4 : i+4]
 		p := dst[i : i+4 : i+4]
 		a := float64(s[3])

@@ -117,9 +117,9 @@ func convolve(img image.Image, kernel []float64, options *ConvolveOptions) *imag
 				srcOff := y*src.Stride + x*4
 				dstOff := y*dst.Stride + x*4
 				d := dst.Pix[dstOff : dstOff+4 : dstOff+4]
-				d[0] = clamp(r)
-				d[1] = clamp(g)
-				d[2] = clamp(b)
+				d[0] = clampSaturating(r)
+				d[1] = clampSaturating(g)
+				d[2] = clampSaturating(b)
 				d[3] = src.Pix[srcOff+3]
 			}
 		}

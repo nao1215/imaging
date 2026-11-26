@@ -158,7 +158,7 @@ func resizeVertical(img image.Image, height int, filter ResampleFilter) *image.N
 			clear(acc)
 			for _, wt := range weights[y] {
 				row := src.row(wt.index, buf)
-				for i := 0; i+3 < len(acc); i += 4 {
+				for i := 0; i < len(row); i += 4 {
 					s := row[i : i+4 : i+4]
 					aw := float64(s[3]) * wt.weight
 					a := acc[i : i+4 : i+4]
@@ -168,17 +168,17 @@ func resizeVertical(img image.Image, height int, filter ResampleFilter) *image.N
 					a[3] += aw
 				}
 			}
-			storeWeightedRow(dst.Pix[y*dst.Stride:y*dst.Stride+w*4], acc, 1)
+			storeWeightedRow(dst.Pix[y*dst.Stride:][:len(acc)], acc)
 		}
 	})
 	return dst
 }
 
 // storeWeightedRow writes a row of alpha-weighted sums to d: each pixel's
-// colour is its sums divided by its alpha, and its alpha is the alpha sum
-// divided by wsum. A pixel whose alpha sum is zero is left as it is.
-func storeWeightedRow(d []uint8, acc []float64, wsum float64) {
-	for i := 0; i+3 < len(acc); i += 4 {
+// colour is its sums divided by its alpha, and its alpha is the alpha sum. A
+// pixel whose alpha sum is zero is left as it is.
+func storeWeightedRow(d []uint8, acc []float64) {
+	for i := 0; i < len(d); i += 4 {
 		a := acc[i : i+4 : i+4]
 		if a[3] != 0 {
 			aInv := 1 / a[3]
@@ -186,7 +186,7 @@ func storeWeightedRow(d []uint8, acc []float64, wsum float64) {
 			p[0] = clamp(a[0] * aInv)
 			p[1] = clamp(a[1] * aInv)
 			p[2] = clamp(a[2] * aInv)
-			p[3] = clamp(a[3] / wsum) // dividing by a wsum of 1 is exact
+			p[3] = clamp(a[3])
 		}
 	}
 }
@@ -201,6 +201,8 @@ func resizeNearest(img image.Image, width, height int) *image.NRGBA {
 	// source to NRGBA first would cost more than it saves; such a source is
 	// read one pixel at a time through the scanner. A well-formed NRGBA
 	// source needs no conversion and is copied from directly either way.
+	// Both branches give the same pixels, so this test chooses a speed, not a
+	// result, and no test can tell its mutants from it.
 	nrgba, isNRGBA := img.(*image.NRGBA)
 	if dx > 1 && dy > 1 && (!isNRGBA || isShort(nrgba)) {
 		src := newScanner(img)

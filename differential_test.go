@@ -199,3 +199,21 @@ func TestDifferential_BlurMatchesPerTapPass(t *testing.T) {
 		requireSame(t, "blurVertical", blurVertical(img, kernel), refBlur1D(img, kernel, false), 1)
 	})
 }
+
+// TestDifferential_ClampSaturatingMatchesClamp checks that the two forms of
+// clamp, one written for predictable values and one for unpredictable ones,
+// round and clamp every value alike.
+func TestDifferential_ClampSaturatingMatchesClamp(t *testing.T) {
+	t.Parallel()
+	for _, x := range []float64{0, 0.4999999999999999, 0.5, 1, 254.4, 254.5, 255, 255.5, -0.5, -1, -1e300, 1e300} {
+		if a, b := clamp(x), clampSaturating(x); a != b {
+			t.Fatalf("x=%v: clamp %d, clampSaturating %d", x, a, b)
+		}
+	}
+	rapid.Check(t, func(t *rapid.T) {
+		x := rapid.Float64Range(-1e6, 1e6).Draw(t, "x")
+		if a, b := clamp(x), clampSaturating(x); a != b {
+			t.Fatalf("x=%v: clamp %d, clampSaturating %d", x, a, b)
+		}
+	})
+}

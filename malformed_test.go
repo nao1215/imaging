@@ -232,6 +232,8 @@ func TestYCbCrShort(t *testing.T) {
 		{"empty bounds", func(m *image.YCbCr) { m.Rect = image.Rect(0, 0, 0, 5); m.Y = nil }, false},
 		{"luma a byte short", func(m *image.YCbCr) { m.Y = m.Y[:len(m.Y)-1] }, true},
 		{"negative chroma stride", func(m *image.YCbCr) { m.CStride = -m.CStride }, true},
+		// Every row then shares one row of chroma, which the planes hold.
+		{"zero chroma stride", func(m *image.YCbCr) { m.CStride = 0 }, false},
 		{"blue chroma a byte short", func(m *image.YCbCr) { m.Cb = m.Cb[:len(m.Cb)-1] }, true},
 		{"red chroma a byte short", func(m *image.YCbCr) { m.Cr = m.Cr[:len(m.Cr)-1] }, true},
 	}
@@ -246,4 +248,51 @@ func TestYCbCrShort(t *testing.T) {
 			_ = Clone(m)
 		})
 	}
+}
+
+// TestBufferCovers pins each bound of the coverage check: a buffer that holds
+// the last byte exactly, one a byte short, a stride of zero (every row is the
+// same row) and a negative one, and the empty sizes, which need no buffer.
+func TestBufferCovers(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name               string
+		n, stride, w, h, b int
+		want               bool
+	}{
+		{"exact fit", 2*8 + 2*4, 8, 2, 3, 4, true},
+		{"a byte short", 2*8 + 2*4 - 1, 8, 2, 3, 4, false},
+		{"one row exactly", 8, 100, 2, 1, 4, true},
+		{"row wider than the buffer", 7, 8, 2, 1, 4, false},
+		{"row exactly the buffer", 8, 8, 2, 1, 4, true},
+		{"zero stride", 8, 0, 2, 50, 4, true},
+		{"zero stride, row too wide", 7, 0, 2, 50, 4, false},
+		{"negative stride", 1000, -8, 2, 3, 4, false},
+		{"no columns", 0, -8, 0, 3, 4, true},
+		{"no rows", 0, -8, 2, 0, 4, true},
+		{"huge stride", 16, int(^uint(0) >> 1), 2, 2, 4, false},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := bufferCovers(tc.n, tc.stride, tc.w, tc.h, tc.b); got != tc.want {
+				t.Fatalf("bufferCovers(%d, %d, %d, %d, %d) = %v, want %v", tc.n, tc.stride, tc.w, tc.h, tc.b, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestNoColumns is the image FuzzMalformedImage found: no columns, five rows
+// and a stride, with an empty buffer. Scanning its second row sliced the empty
+// buffer at offset 28.
+func TestNoColumns(t *testing.T) {
+	t.Parallel()
+
+	img := &image.NRGBA{Stride: 28, Rect: image.Rect(0, 0, 0, 5)}
+	if got := Clone(img).Bounds().Size(); got != image.Pt(0, 5) {
+		t.Fatalf("size %v", got)
+	}
+	_ = Blur(img, 1)
+	_ = Resize(img, 0, 3, Linear)
 }
