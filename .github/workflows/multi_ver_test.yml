@@ -18,6 +18,7 @@ concurrency:
 jobs:
   unit-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         # The floor go.mod declares and the newest release. The floor moved to
@@ -49,6 +50,7 @@ jobs:
     # working there fails in their terminal rather than here unless something
     # watches it. No binary is produced and a leg takes seconds.
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -65,3 +67,24 @@ jobs:
 
       - name: Build the library
         run: go build ./...
+
+  unit-test-32bit:
+    name: Unit test (GOARCH=386)
+
+    # int is 32 bits here. A buffer-length check that multiplies a stride by a
+    # row count, or a test constant that needs 64 bits, overflows or fails to
+    # compile; the 64-bit legs cannot see either. A linux/amd64 runner runs 386
+    # binaries natively. The golden tests allow a level of rounding off amd64.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GOARCH: "386"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "stable"
+      - name: Test
+        run: go test ./...

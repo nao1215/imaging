@@ -25,6 +25,7 @@ jobs:
         platform: [ubuntu-latest]
 
     runs-on: ${{ matrix.platform }}
+    timeout-minutes: 15
 
     permissions:
       contents: read
@@ -43,4 +44,15 @@ jobs:
 
       - name: Run tests with coverage report output
         run: go test -cover -coverpkg=./... -coverprofile=coverage.out ./...
+
+      # The worker goroutines of parallel() share their output image; a race
+      # there is a corrupted pixel no other test notices.
+      - name: Run tests under the race detector
+        run: go test -race ./...
+
+      # The benchmark module beside the package builds against it with a
+      # replace directive, so an API change that breaks it shows here.
+      - name: Vet the upstream benchmark module
+        working-directory: scripts/upstreambench
+        run: go vet ./...
       - uses: k1LoW/octocov-action@a167dc0dee441b7ffc45e1b862ab55ec0d87f278 # v1.5.2
