@@ -4,6 +4,10 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+### Changed
+
+- Mutation testing passes a pull request whose changed lines hold no mutant, such as one that changes only tests or comments. gremlins counts every mutant outside the diff as skipped and reported 0% efficacy for such a pull request, which failed the threshold.
+
 ## [1.0.14] - 2026-11-27
 
 ### Fixed
